@@ -1,0 +1,1 @@
+bash script/run_v4_nips_1000_gemini.sh
