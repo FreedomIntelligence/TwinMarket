@@ -1,9 +1,13 @@
 """
-# notice
-# 1. 拆单交易（100股）
-# 2. 交易的个股（50只股票）
-"""
+# notice:
+1. 非拆单交易
+2. 交易10个指数
+3. 推荐股票改成推荐指数
 
+# change:
+1. 推荐两只指数
+2.选择潜在交易指数的时候给更多的内容
+"""
 import time
 from codecs import BOM
 from attr import define
@@ -22,8 +26,8 @@ import asyncio
 from util.InformationDB import InformationDB
 import re
 from .utility import *
-from .Prompt import TradingPrompt
-from .StockRec import StockRecommender
+from .prompts import TradingPrompt
+from .recommender import StockRecommender
 from .IndustryDict import *
 from util.UserDB import *
 from util.ForumDB import *
@@ -35,8 +39,8 @@ import numpy as np
 INFORMATION_DB = InformationDB(config_path="config/embedding.yaml",
                                database_dir="data/InformationDB_news_2023")
 INFORMATION_DB.load_database()
-STOCK_REC = StockRecommender()
-STOCK_REC._load_or_build_stock_relations()
+# STOCK_REC = StockRecommender()
+# STOCK_REC._load_or_build_stock_relations()
 STOCK_DB_NAME = 'StockData'
 
 
@@ -74,7 +78,6 @@ class PersonalizedStockTrader:
         self.all_stock_list = []
         self.stocks_to_deal = []
         self.df_stock = df_stock
-        self.system_context = TradingPrompt.get_system_prompt(user_profile, self.user_strategy)
 
         self.import_news = import_news
         self.is_trading_day = is_trading_day
@@ -84,53 +87,14 @@ class PersonalizedStockTrader:
         self.forum_args = None
         self.decision_result = None
         self.post_response_args = None
+        self.stock_profile_dict = STOCK_PROFILE_DICT
+        self.conversation_history = []
+        self.system_context = None
 
         self.is_random_trader = is_random_trader
         self.config_path = config_path
         self.base_agent = BaseAgent(config_path=self.config_path)
-        self.price_info={}
-
-        self.conversation_history = [
-            self.system_context,
-            {"role": "user", "content": f"接下来我将提供给你更加具体的人设：{user_profile['prompt']}"},
-            {"role": "assistant", "content": f"明白了，我会严格根据以上特征和投资组合状况来进行对话和决策。"}
-        ]
-
-    # def _process_decision_result(self, decision_result: dict) -> dict:
-    #     for stock_code, decision in decision_result.get("stock_decisions", {}).items():
-    #         action = decision.get("action")
-    #         if action != "hold":
-    #             target_position = decision.get("target_position", 0)
-    #             cur_position = decision.get("cur_position", 0)
-    #             trade_position = abs(target_position - cur_position)
-    #             target_price = decision.get("target_price", 0)
-    #             # 获取涨停价和跌停价
-    #             limit_up = self.price_info[stock_code].get('limit_up', float('inf'))
-    #             limit_down = self.price_info[stock_code].get('limit_down', 0)
-                
-    #             # 计算交易数量
-    #             if target_price > 0:
-    #                 quantity = (trade_position / 100) * self.user_profile['total_value'] / target_price
-    #                 if quantity < 100:
-    #                     quantity = 100
-    #                 else:
-    #                     quantity = (quantity // 100) * 100  # 向下取整为100的倍数
-
-    #                 # 如果是卖出操作，确保不超过当前持仓数量
-    #                 if action == "sell" and stock_code in self.user_profile.get('cur_positions', {}):
-    #                     current_shares = self.user_profile['cur_positions'][stock_code].get('shares', 0)
-    #                     quantity = min(quantity, current_shares)
-    #                     # 确保卖出数量是100的倍数
-    #                     quantity = (quantity // 100) * 100
-
-                    
-
-    #                 decision["quantity"] = int(quantity)  # 更新决策结果中的数量
-    #         else:
-    #             decision["quantity"] = 0
-            
-
-    #     return decision_result
+        self.price_info = {}
 
 
     def _process_decision_result(self, decision_result: dict) -> dict:
@@ -138,6 +102,7 @@ class PersonalizedStockTrader:
             action = decision.get("action")
             if action != "hold":
                 target_position = decision.get("target_position", 0)
+                target_position = int(target_position*100)/100
                 cur_position = decision.get("cur_position", 0)
                 trade_position = abs(target_position - cur_position)
                 target_price = decision.get("target_price", 0)
@@ -163,34 +128,8 @@ class PersonalizedStockTrader:
 
                     # 拆单逻辑
                     if quantity >= 100:
-                        num_orders = int(quantity // 100)  # 拆成多少单
-                        total_value = quantity * target_price  # 原始总价值
-
-                        # 生成交替的高于和低于 target_price 的价格
-                        adjusted_prices = []
-                        cumulative_value = 0
-                        for i in range(num_orders):
-                            if i % 2 == 0:
-                                # 高于 target_price
-                                price = target_price * (1 + np.random.uniform(0, 0.03)) 
-                                price = round(min(price, limit_up), 2)  # 确保不超过涨停价
-                            else:
-                                # 低于 target_price
-                                price = target_price * (1 - np.random.uniform(0, 0.03))  
-                                price = round(max(price, limit_down), 2)  # 确保不低于跌停价
-
-                            # 调整最后一单的价格，确保累计 quantity * price 不超过原始总价值
-                            if i == num_orders - 1:
-                                remaining_value = total_value - cumulative_value
-                                price = remaining_value / 100
-                                price = max(min(price, limit_up), limit_down)  # 限制价格范围
-
-                            adjusted_prices.append(price)
-                            cumulative_value += price * 100
-
-                        # 生成子单
                         decision["sub_orders"] = [
-                            {"quantity": 100, "price": float(price)} for price in adjusted_prices
+                            {"quantity": quantity, "price": float(target_price)}
                         ]
                     else:
                         decision["sub_orders"] = []
@@ -202,36 +141,18 @@ class PersonalizedStockTrader:
 
         return decision_result
 
-
-    def should_trade_today(self) -> bool:
-        return random.random() < self.user_profile['trad_pro']
-
     def get_stock_data(self, stock_codes: list, indicators: list, start_date: str = None, end_date: str = None) -> dict:
         try:
             # 首先处理日期参数
 
             result = {}
 
-            # 1. 从company_info.csv获取公司基本信息
-            company_info_df = pd.read_csv(COMPANY_INFO_PATH)
-
             # 2. 从数据库获取
             df = self.df_stock.copy(deep=True)
 
             for stock_code in stock_codes:
-                # 处理股票代码格式
-                if not stock_code.startswith(('SH')):
-                    stock_code = f"SH{stock_code}"
 
                 stock_result = {}
-
-                # 获取公司基本信息
-                company_row = company_info_df[company_info_df['ts_code'] == stock_code]
-                if not company_row.empty:
-                    company_indicators = [ind for ind in indicators if ind in company_row.columns]
-                    for indicator in company_indicators:
-                        stock_result[indicator] = company_row[indicator].values[0]
-
                 # 获取交易数据
                 stock_data = df[df['stock_id'] == stock_code]
                 trading_indicators = [ind for ind in indicators if ind in df.columns]
@@ -277,17 +198,13 @@ class PersonalizedStockTrader:
 
         summary = []
         for stock_code in stock_codes:
-            # 处理股票代码格式
-            if not stock_code.startswith(('SH')):
-                stock_code = f"SH{stock_code}"
-
             selected_row = df.loc[(df['stock_id'] == stock_code) & (df['date'] <= yesterday)].sort_values('date', ascending=False)
             if not selected_row.empty:
                 selected_row = selected_row.iloc[0][columns]
                 stock_summary = TradingPrompt.get_stock_summary(stock_code, selected_row)
                 summary.append(stock_summary)
             else:
-                summary.append(f"## 股票代码：{stock_code} 无上个交易日交易数据。")
+                summary.append(f"## 指数名称：{stock_code} 无上个交易日交易数据。")
 
         return "\n".join(summary)
 
@@ -296,7 +213,7 @@ class PersonalizedStockTrader:
         stock_summary = self._get_stock_summary(self.stocks_to_deal, current_date)
         positions_info = self._get_stock_details(self.stocks_to_deal, type='full')
 
-        return TradingPrompt.get_initial_prompt(
+        return TradingPrompt.get_initial_prompt_fake(
             formatted_date=formatted_date,
             stocks_to_deal=self.stocks_to_deal,
             stock_summary=stock_summary,
@@ -312,28 +229,13 @@ class PersonalizedStockTrader:
         print_debug("Getting environment information...", debug)
         news_anno = True
         if news_anno:
-            new_message, queries, stock_ids = self._desire_agent(current_date)
-            # self.conversation_history.append({
-            #     "role": "user",
-            #     "content": f"我帮你搜索到了如下信息和公告：\n\n{new_message}\n请你根据你的投资风格和人设，结合你目前的持仓谈谈你的初步看法,言简意赅一些。"})
-            # agent = BaseAgent()
-            # response = agent.get_response(
-            #     messages=self.conversation_history
-            # )
-            # news_analyse = response.get("response")
-            # self.conversation_history.append({
-            #     "role": "assistant",
-            #     "content": news_analyse})
-
+            new_message, queries = self._desire_agent(current_date)
             agent = self.base_agent
             input_message = [{"role": "user", "content": f"{self.system_context['content']}\n 我帮你搜索到了如下信息和公告：\n{new_message}\n请你根据你的投资风格和人设，结合你目前的持仓谈谈你的初步看法,言简意赅一些。"}]
             self.point1 = agent.get_response(
                 messages=input_message
             ).get("response")
-            self.conversation_history[-1]["content"] = f"## 我想要查询的关键词和股票代码如下：\n- 关键词：{queries}\n- 股票代码：{stock_ids} \n\n  ## 目前初步想法：\n {self.point1}"
-            # self.conversation_history.append({
-            #     "role": "user",
-            #     "content": self.point1})
+            self.conversation_history[-1]["content"] = f"## 我想要查询的关键词如下：\n- 关键词：{queries}\n  ## 经过自行查阅相关信息，目前初步想法：\n {self.point1}"
             return new_message, True
 
         return None, False
@@ -348,28 +250,23 @@ class PersonalizedStockTrader:
         """
         异步主逻辑：处理交易决策。
         """
+        self.is_day_1 = day_1st
         self.stock_codes = stock_codes
         self.cur_date = current_date.strftime('%Y-%m-%d')
         self.debug = debug
-
-        # 记录总开始时间
-        start_time_total = time.time()
-
-        # # 获取昨天的 belief
-        # if not day_1st:
-        #     start_time = time.time()
-        #     user_post = get_user_posts_db(
-        #         user_id=self.user_id,
-        #         end_date=current_date - timedelta(days=1),
-        #         db_path=self.forum_db_path
-        #     )
-        #     self.belief = user_post.get("belief", None) if user_post else None
-        #     print_debug(f"获取昨天的 belief 耗时: {time.time() - start_time:.2f}秒", debug)
 
         # 刷帖 TODO 更新 belief : 放在 user_profile 里面
         start_time = time.time()
         self.rec_post = []
         self.forum_args = {}
+
+        self.system_context = TradingPrompt.get_system_prompt_new(self.user_profile, self.user_strategy, self.stock_profile_dict, self.stock_codes)
+
+        self.user_prompt = TradingPrompt.get_user_first_prompt(self.user_profile, self.user_strategy, self.stock_profile_dict, pd.to_datetime(self.cur_date), self.is_trading_day, self.belief)
+        agent_first_prompt = TradingPrompt.get_agent_first_response(self.user_profile, self.user_strategy, self.stock_profile_dict, pd.to_datetime(self.cur_date), self.is_trading_day, self.belief)
+        self.conversation_history.append(self.system_context)
+        self.conversation_history.append(self.user_prompt)
+        self.conversation_history.append(agent_first_prompt)
 
         if not day_1st:
             self.rec_post = recommend_post_graph(
@@ -382,7 +279,7 @@ class PersonalizedStockTrader:
             )
 
             self.forum_args, self.forum_summary = self._forum_action()
-            # print_debug(f'self.forum_args: {self.forum_args}', debug)
+            print_debug(f'self.forum_args: {self.forum_args}', debug)
             self.conversation_history.append({"role": "user", "content": self.forum_summary})
             # todo: add to conversation history: self.forum_summary
         print_debug(f"刷帖模块耗时: {time.time() - start_time:.2f}秒", debug)
@@ -415,7 +312,7 @@ class PersonalizedStockTrader:
             # 更新 belief
             if not self.is_random_trader:
                 start_time = time.time()
-                # fix 
+                # fix
                 self.belief = self._update_belief()
                 # self.belief = tmp_belief.get("belief", self.belief)
                 print_debug(f"更新 belief 耗时: {time.time() - start_time:.2f}秒", debug)
@@ -428,9 +325,10 @@ class PersonalizedStockTrader:
 
             # 收集查询的数据 TODO：可能为空
             if self.is_trading_day and not self.is_random_trader:
-                start_time = time.time()
-                self._data_collection(debug)
-                print_debug(f"收集查询的数据耗时: {time.time() - start_time:.2f}秒", debug)
+                if len(self.stocks_to_deal) > 0:
+                    start_time = time.time()
+                    self._data_collection(debug)
+                    print_debug(f"收集查询的数据耗时: {time.time() - start_time:.2f}秒", debug)
 
             # return self.user_id, self.decision_result, post_response_args
             # self.output_decision()
@@ -438,73 +336,35 @@ class PersonalizedStockTrader:
             if self.is_trading_day:
                 start_time = time.time()
                 if not self.is_random_trader:
-                    self.decision_result = self._make_final_decision(debug)
+                    if len(self.stocks_to_deal) > 0:
+                        self.decision_result = self._make_final_decision(debug)
+                    else:
+                        self.decision_result = None
                 else:
                     self.decision_result = self._make_final_decision_random(debug)
                 print_debug(f"{'是' if self.is_random_trader else '不是'}random trader；生成最终决策耗时: {time.time() - start_time:.2f}秒", debug)
 
             # 处理决策结果，计算每个股票的交易数量
             if self.is_trading_day:
-                start_time = time.time()
-                self.decision_result = self._process_decision_result(self.decision_result)
+                if self.decision_result:
+                    start_time = time.time()
+                    self.decision_result = self._process_decision_result(self.decision_result)
+                else:
+                    self.decision_result = {"error": "用户不选择交易任何股票"}
                 print_debug(f"处理决策结果耗时: {time.time() - start_time:.2f}秒", debug)
 
             # 发帖
             start_time = time.time()
             print_debug("Interacting with environment...", debug)
             self.post_response_args = self._intention_agent(current_date, self.conversation_history)  # post, type, belief
-            # print('belief updated:')
-            # print(self.post_response_args.get('belief',''))
-            # print_debug(json.dumps(self.post_response_args, indent=2, ensure_ascii=False), debug)
-        # create_post_db(
-        #     user_id=self.user_id,
-        #     content=post_response_args["post"],
-        #     type=post_response_args["type"],
-        #     belief=str(post_response_args["belief"]),
-        #     created_at=current_date,
-        #     db_path=self.forum_db_path)
+            print_debug(self.post_response_args, debug)
             print_debug(f"与 environment 交互耗时: {time.time() - start_time:.2f}秒", debug)
 
         else:
-            self.decision_result = {"error": "User is not activated."}
+            self.decision_result = {"error": "用户没有被激活"}
             self.post_response_args = None
 
         return self.forum_args, self.user_id, self.decision_result, self.post_response_args, self.conversation_history
-
-    # def output_decision(self):
-    #     # 生成最终决策
-    #     debug = self.debug
-    #     current_date = pd.to_datetime(self.cur_date)
-
-    #     if self.is_trading_day:
-    #         start_time = time.time()
-    #         if not self.is_random_trader:
-    #             self.decision_result = self._make_final_decision(debug)
-    #         else:
-    #             self.decision_result = self._make_final_decision_random(debug)
-    #         print_debug(f"{'是' if self.is_random_trader else '不是'}random trader；生成最终决策耗时: {time.time() - start_time:.2f}秒", debug)
-
-    #     # 处理决策结果，计算每个股票的交易数量
-    #     if self.is_trading_day:
-    #         start_time = time.time()
-    #         self.decision_result = self._process_decision_result(self.decision_result)
-    #         print_debug(f"处理决策结果耗时: {time.time() - start_time:.2f}秒", debug)
-
-    #     # 与 environment 交互
-    #     start_time = time.time()
-    #     print_debug("Interacting with environment...", debug)
-    #     self.post_response_args = self._intention_agent(current_date, self.conversation_history)  # post, type, belief
-    #     # print_debug(json.dumps(post_response_args, indent=2, ensure_ascii=False), debug)
-    #     # create_post_db(
-    #     #     user_id=self.user_id,
-    #     #     content=post_response_args["post"],
-    #     #     type=post_response_args["type"],
-    #     #     belief=str(post_response_args["belief"]),
-    #     #     created_at=current_date,
-    #     #     db_path=self.forum_db_path)
-    #     print_debug(f"与 environment 交互耗时: {time.time() - start_time:.2f}秒", debug)
-
-    #     return
 
     def _make_final_decision_random(self, debug: bool = False) -> dict:
 
@@ -535,12 +395,12 @@ class PersonalizedStockTrader:
         # 验证决策
         # decision_args = self._validate_decision(decision_args, price_info, cur_positions, available_position)
         decision_args = self._polish_decision(decision_args, cur_positions, available_position)
-        analysis_result = '我今天的决策由AI驱动，在后续的belief更新中，请根据我的决策结果进行更新。'
+        analysis_result = '我今天的决策为自动化交易，在后续的belief更新中，请根据我的决策结果进行更新。'
         decision_result = TradingPrompt.decision_json_to_prompt(decision_args, self.potential_stock_list)
 
         # 生成一个user的对话
         self.conversation_history.append({"role": "user",
-                                          "content": f"""现在是做出最终交易决策的时候。请基于之前的分析，结合你的投资风格和人设，首先进行分析，然后对每支股票做出具体的交易决策并给出你的理由。"""})
+                                          "content": f"""现在是做出最终交易决策的时候。请基于之前的分析，结合你的投资风格和人设，首先进行分析，然后对每支行业指数做出具体的交易决策并给出你的理由。"""})
         self.conversation_history.append({"role": "assistant", "content": f"""{analysis_result}\n{decision_result}"""})
 
         return decision_args  # 如果验证通过，返回决策
@@ -612,7 +472,7 @@ class PersonalizedStockTrader:
                     'limit_down': limit_down
                 }
             else:
-                raise ValueError(f"无法获取股票 {stock_code} 在 {current_date} 的价格数据")
+                raise ValueError(f"无法获指数 {stock_code} 在 {current_date} 的价格数据")
 
         return price_limits
 
@@ -642,7 +502,7 @@ class PersonalizedStockTrader:
 
         # 遍历每支股票的数据
         for stock_code, stock_data in data.items():
-            result.append(f"\n# {stock_code} 的额外股票信息")
+            result.append(f"\n# 指数{stock_code} 的额外信息")
             result.append(f"查询区间：{stock_data.get('start_date', '')} 至 {stock_data.get('end_date', '')}")
 
             if 'data' in stock_data:
@@ -683,14 +543,14 @@ class PersonalizedStockTrader:
         before_decision_history = conversation_history[:-2]
         post_agent = self.base_agent
         post_prompt = TradingPrompt.get_intention_prompt(self.belief)
-        
+
         # fix
         # self.conversation_history.append({"role": "user", "content": f'''{self.user_profile['sys_prompt']}\n{post_prompt}'''})
-        
+
         self.conversation_history.append({"role": "user", "content": post_prompt})
         post_response = post_agent.get_response(
             messages=self.conversation_history,
-            temperature=2.0
+            temperature=1.3
             # response_format={"type": "json_object"}
         )
         post_response = post_response.get("response")
@@ -807,7 +667,6 @@ class PersonalizedStockTrader:
         异步生成用户的查询问题并并发查询新闻信息。
         """
         # 第一步：生成用户的查询问题
-        main_time = time.time()
         query_agent = self.base_agent
 
         self.all_stock_list = list(set(self.stock_codes) | set(self.potential_stock_list))
@@ -857,47 +716,11 @@ class PersonalizedStockTrader:
 
         search_args = parse_response_yaml(response=summary_response, max_retries=3)
         queries = search_args.get("queries", None)
-        stock_ids = search_args.get("stock_id", None)
 
-        max_num = 1
+        # 按照重要性程度排序，只取第一个
         if queries:
-            queries = random.sample(queries, min(max_num, len(queries)))
-        if stock_ids:
-            stock_ids = random.sample(stock_ids, min(max_num, len(stock_ids)))
-
-        # print(f"\033[31m查找新闻前获取query耗时: {time.time() - main_time:.2f}秒\033[0m")
-
-        main_time = time.time()
-
-        # 版本1
-        # def search_and_process_news(query):
-        #     news_result = self.InformationDataBase.search_news(
-        #         start_date=current_date - pd.Timedelta(days=7),
-        #         end_date=current_date,
-        #         query=query,
-        #         top_k=2,
-        #         type=None
-        #     )
-        #     if news_result:
-        #         samples = [a['content'] for a in news_result]
-        #         timelines = [a['datetime'] for a in news_result]
-        #         result_str = f"查询<{query}> 得到的新闻信息如下:\n"
-        #         for i in range(0, len(samples)):
-        #             result_str += f"- 第{i+1}条结果:{timelines[i]}: {samples[i]}\n"
-        #         return result_str
-        #     else:
-        #         return ""
-
-        # if queries:
-        #      # 使用 asyncio.gather 并发执行搜索任务
-        #     tasks = [search_and_process_news(query) for query in queries]
-        #     results = asyncio.gather(*tasks)
-        #     result_str = "".join(results)
-        # else:
-        #     result_str=""
-
-        # 版本2
-        if not queries:
+            queries = queries[:1]
+        else:
             return ''
 
         news_results_list = self.InformationDataBase.search_news_batch(
@@ -915,60 +738,17 @@ class PersonalizedStockTrader:
             if news_results:
                 samples = [a['content'] for a in news_results]
                 timelines = [a['datetime'] for a in news_results]
-
-                # samples, timelines = rerank_documents_async(query, samples, timelines, top_n=2)
-
                 result_str += f"查询<{query}> 得到的新闻信息如下:\n"
                 for i in range(0, len(samples)):
                     result_str += f"- 第{i+1}条结果:{timelines[i]}: {samples[i]}\n"
                 result_str += '\n'
 
-        # print(f'faiss查询结果:\n{result_str}')
-
-        # print(f"\033[31m faiss搜索新闻耗时: {time.time() - main_time:.2f}秒，query长度为{len(queries)}\033[0m")
-        return result_str, queries, stock_ids
-
-        # result_str = ""
-
-        # # 查找新闻信息
-        # for query in queries:
-
-        #     # # TODO 加reranker
-        #     # news_result = self.InformationDataBase.search_news(start_date=current_date-pd.Timedelta(days=7),
-        #     #                                                    end_date=current_date,
-        #     #                                                    query=query,
-        #     #                                                    top_k=10,
-        #     #                                                    type=None)
-
-        #     # # 从新闻数据中选择两个记录
-        #     # if news_result:
-        #     #     samples = [a['content'] for a in news_result]
-        #     #     timelines = [a['datetime'] for a in news_result]
-        #     #     samples, timelines = rerank_documents(query, samples, timelines)
-        #     #     result_str += f"查询<{query}> 得到的新闻信息如下:\n"
-        #     #     for i in range(0, len(samples)):
-        #     #         result_str += f"- 第{i+1}条结果:{timelines[i]}: {samples[i]}\n"
-        #     #     result_str += '\n'
-
-        #     # TODO 加reranker
-        #     news_result = self.InformationDataBase.search_news(start_date=current_date-pd.Timedelta(days=7),
-        #                                                        end_date=current_date,
-        #                                                        query=query,
-        #                                                        top_k=2,
-        #                                                        type=None)
-
-        #     # 从新闻数据中选择两个记录
-        #     if news_result:
-        #         samples = [a['content'] for a in news_result]
-        #         timelines = [a['datetime'] for a in news_result]
-        #         result_str += f"查询<{query}> 得到的新闻信息如下:\n"
-        #         for i in range(0, len(samples)):
-        #             result_str += f"- 第{i+1}条结果:{timelines[i]}: {samples[i]}\n"
-        #         result_str += '\n'
-
-        # return result_str
+        return result_str, queries
 
     def _forum_action(self) -> tuple[list[dict], str]:
+        if self.is_day_1:
+            return {}, ''
+
         post_descriptions = []
         for post in self.rec_post:
             description = f"帖子ID: {post['id']}, 内容: {post['content']}"
@@ -995,7 +775,7 @@ class PersonalizedStockTrader:
                 reference_id = post.get("reference_id")
                 if reference_id:
                     # 查询引用的帖子内容
-                    with sqlite3.connect(self.db_path) as conn:
+                    with sqlite3.connect(self.forum_db_path) as conn:
                         cursor = conn.execute('''
                             SELECT content FROM posts WHERE id = ?
                         ''', (reference_id,))
@@ -1003,20 +783,29 @@ class PersonalizedStockTrader:
                         if reference_post:
                             reference_content = reference_post["content"]
 
+            # 使用 find_root_post 获取原始帖子内容
+            root_post = find_root_post(post_id, self.forum_db_path)
+            root_content = root_post["content"] if root_post else "未找到原始帖子"
+
             # 获取针对当前帖子的决策 prompt
             post_decision_prompt = f"""
             {self.user_profile['sys_prompt']}
+            现在你正在浏览论坛，你需要对每个帖子做出决策，决定是否对该帖子执行操作。你的决策应该符合你的投资风格和人设。
             以下是当前帖子的信息：
-            帖子ID: {post_id}
-            内容: {post_content}
+            <post_id>{post_id}</post_id> 
+            <content>{post_content}</content>
             """
 
-            # 如果帖子是 repost 类型，添加引用内容
-            if post_type == "repost" and reference_content:
-                post_decision_prompt += f"""
-                该帖子引用了以下内容：
-                引用内容: {reference_content}
-                """
+            # 添加原始帖子的内容
+            post_decision_prompt += f"""
+            该帖子引用了以下内容：<ref>{root_content}</ref>
+            """
+
+            # # 如果帖子是 repost 类型，添加引用内容
+            # if post_type == "repost" and reference_content:
+            #     post_decision_prompt += f"""
+            #     其他人对这个帖子的评论：<comment> {reference_content} </comment>
+            #     """
 
             post_decision_prompt += f"""
             请根据以上信息决定是否对该帖子执行操作。
@@ -1024,53 +813,76 @@ class PersonalizedStockTrader:
             - repost: 转发: 你认为这个帖子值得分享给更多人，可以添加你的评论
             - unlike: 取消点赞: 你认为这个帖子不值得点赞
             - like: 点赞: 你认为这是一个有价值的帖子
+            
+            请注意，你的分析应该是基于你看到的这些帖子的。
 
-            请按照以下 yaml 格式输出你的决策：
-            ```yaml
-            action: <操作类型>
-            post_id: <帖子ID>
-            reason: <操作的理由>
-            ```
+            请按照以下格式输出你的决策：
+            <action> 操作类型 </action> <reason> 输出你的理由 </reason>
             """
+            # ```yaml
+            # action: <操作类型>
+            # post_id: <帖子ID>
+            # reason: <用一段话解释你的决策理由，不要有任何换行符和特殊符号>
+            # ```
+
             forum_message.append({"role": "user", "content": post_decision_prompt})
 
             # 获取论坛行为的响应
             forum_agent = self.base_agent
-            response = forum_agent.get_response(messages=forum_message,
-                                                temperature=1.3)
+            response = forum_agent.get_response(
+                # user_input=post_decision_prompt,
+                messages=forum_message,
+                temperature=1.3)
             response = response.get("response")
+            post_decision_args = {}
 
-            # 解析响应为决策参数
-            post_decision_args = parse_response_yaml(response, max_retries=3)
+            pattern = r"<reason>(.*?)</reason>"
+            match = re.search(pattern, response, re.DOTALL)
+            if match:
+                reason = match.group(1).strip()
+            else:
+                reason = response.strip()
+
+            post_decision_args["post_id"] = post_id
+            post_decision_args["reason"] = reason
+            if "repost" in response:
+                post_decision_args["action"] = "repost"
+            elif "like" in response:
+                post_decision_args["action"] = "like"
+            elif "unlike" in response:
+                post_decision_args["action"] = "unlike"
+            else:
+                post_decision_args["action"] = None
+
+            # post_decision_args = parse_response_yaml(response, max_retries=3)
             if isinstance(post_decision_args, dict):
                 post_decision_args = [post_decision_args]
 
-            # 处理转发操作
-            for arg in post_decision_args:
-                if arg["action"] == "repost":
-                    # 获取目标帖子的内容
-                    target_post_id = arg["post_id"]
-                    target_post = next((post for post in self.rec_post if post["id"] == target_post_id), None)
-                    if target_post:
-                        # 构建生成转发内容的 prompt
-                        content_prompt = f"""
-                        你决定转发以下帖子：
-                        帖子ID: {target_post_id}
-                        内容: {target_post["content"]}
+            # post_decision_args.append({"reason": reason})
 
-                        请生成一段转发内容，简要说明你转发的原因或评论。
-                        你应该按照 yaml 格式输出:
-                        ```yaml
-                        content: <你的转发内容>
-                        ```
-                        """
-                        forum_message.append({"role": "assistant", "content": content_prompt})
-                        content_response = forum_agent.get_response(messages=forum_message,
-                                                                    temperature=1.3)
-                        content_response = content_response.get("response")
-                        content_data = parse_response_yaml(response=content_response, max_retries=3)
-                        if isinstance(content_data, dict) and "content" in content_data:
-                            arg["content"] = content_data["content"]
+            # # 处理转发操作
+            # for arg in post_decision_args:
+            #     if arg["action"] == "repost":
+            #         # 获取目标帖子的内容
+            #         target_post_id = arg["post_id"]
+            #         target_post = next((post for post in self.rec_post if post["id"] == target_post_id), None)
+            #         if target_post:
+            #             # 构建生成转发内容的 prompt
+            #             content_prompt = f"""
+            #             你决定转发以下帖子：
+            #             帖子ID: {target_post_id}
+            #             内容: {target_post["content"]}
+
+            #             请生成一段转发内容，简要说明你转发的原因或评论。
+            #             """
+            #             forum_message.append({"role": "assistant", "content": content_prompt})
+            #             content_response = forum_agent.get_response(messages=forum_message,
+            #                                                         temperature=1.3)
+            #             content_response = content_response.get("response")
+            #             # content_data = parse_response_yaml(response=content_response, max_retries=3)
+            #             content_data = content_response
+            #             if isinstance(content_data, dict) and "content" in content_data:
+            #                 arg["content"] = content_data["content"]
 
             # 将当前帖子的决策参数添加到总决策参数列表中
             decision_args.extend(post_decision_args)
@@ -1091,7 +903,7 @@ class PersonalizedStockTrader:
                 reason = arg.get("reason", "未提供理由")
                 if action_type == "repost":
                     content = arg.get("content", "")
-                    action_summary += f"- 你转发了帖子 {post_id}，转发内容为：{content}\n  理由：{reason}\n"
+                    action_summary += f"- 你转发了帖子 {post_id}，转发内容为：{reason}\n"
                 elif action_type == "like":
                     action_summary += f"- 你点赞了帖子 {post_id}\n  理由：{reason}\n"
                 elif action_type == "unlike":
@@ -1099,33 +911,52 @@ class PersonalizedStockTrader:
 
         return decision_args, action_summary
 
-    def _get_rec_stock(self):
-        rec_stock = STOCK_REC.recommend_portfolio(input_portfolio=self.stock_codes, top_n=5)
+    def _get_rec_stock(self) -> list:
+        """
+        Recommend all stocks that are not in the current portfolio (self.stock_codes) but are present in the CSV file.
+
+        Returns:
+            list: A list of all recommended stock IDs.
+        """
+        df = pd.read_csv(STOCK_PROFILE_PATH2)
+
+        # Filter out stocks that are already in the current portfolio
+        available_stocks = df[~df['stock_id'].isin(self.stock_codes)]
+
+        if available_stocks.empty:
+            return
+
+        num_recommendations = min(2, len(available_stocks))
+        rec_stock = random.sample(available_stocks['stock_id'].tolist(), num_recommendations)
+        # Update the potential stock list
         self.potential_stock_list = rec_stock
+
+        return
 
     def _update_belief(self) -> str:
         pre_conversation_history = self.conversation_history.copy()
         pre_conversation_history.append({"role": "assistant", "content": TradingPrompt.get_update_belief_prompt(self.belief)})
         update_agent = self.base_agent
-        
+
         response = update_agent.get_response(
             messages=pre_conversation_history,
             temperature=2.0
         )
-        
+
         response = response.get("response")
-        # fix 
+        # fix
         # belief_args = parse_response_yaml(response, max_retries=3)
         # todo: update self.belief
         return response
 
     def _choose_stocks(self) -> list:
         self.current_stocks_details = self._get_stock_details(self.stock_codes, 'full')
-        potential_stocks_details = self._get_stock_details(self.potential_stock_list, 'basic')
+        potential_stocks_details = self._get_stock_details(self.potential_stock_list, 'full')
         prompt = TradingPrompt.get_stock_selection_prompt(
             self.current_stocks_details,
             potential_stocks_details,
-            self.belief
+            self.belief,
+            self.user_profile['fol_ind']
         )
         self.conversation_history.append({
             "role": "user",
@@ -1141,7 +972,7 @@ class PersonalizedStockTrader:
         response = response.get("response")
         stock_args = parse_response_yaml(response=response, max_retries=3)
 
-        stock_list = stock_args.get("selected_stocks", [])
+        stock_list = stock_args.get("selected_index", [])
         stock_list = [stock for stock in stock_list if stock in self.all_stock_list]
         reason = stock_args.get("reason", "")
 
@@ -1150,30 +981,31 @@ class PersonalizedStockTrader:
         if len(stock_list) == 0:
             self.conversation_history.append({
                 "role": "assistant",
-                "content": f"我今天不选择交易任何股票。\n理由如下 {reason}"
+                "content": f"我今天不选择交易任何行业指数。\n理由如下 {reason}"
             })
 
         else:
             self.conversation_history.append({
                 "role": "assistant",
-                "content": f"我今天选择交易的股票为: {', '.join(stock_list)}\n理由如下 {reason}"
+                "content": f"我今天选择交易的资产为: {', '.join(stock_list)}\n理由如下 {reason}"
             })
 
         return stock_list
 
     def _get_stock_details(self, stock_list: list, type: str = "basic") -> str:
-        df = pd.read_csv(STOCK_PROFILE_PATH)
+        df = pd.read_csv(STOCK_PROFILE_PATH2)
         stock_details_str = ""
+        # 框定就是只有交易日才会调用
+        if type == 'full':
+            df_stock = self.df_stock.copy(deep=True)
+
+        yesterday = pd.to_datetime(self.cur_date) - pd.Timedelta(days=1)
 
         for stock in stock_list:
-            # 确保股票代码格式正确
-            if not stock.startswith('SH'):
-                stock = f'SH{stock}'
-
             stock_info = df[df['stock_id'] == stock]
             if not stock_info.empty:
                 if type == "basic":
-                    stock_details_str += f"- 股票代码：{stock}，名称：{stock_info['name'].iloc[0]}，行业：{stock_info['industry'].iloc[0]}；\n"
+                    stock_details_str += f"- 指数代码：{stock}，名称：{stock_info['name'].iloc[0]}，行业：{stock_info['industry'].iloc[0]}，{self.stock_profile_dict[stock]}\n"
                 elif type == "full":
                     if stock in self.user_profile['cur_positions']:
                         market_value = self.user_profile["stock_returns"][stock]["market_value"]  # 持仓市值
@@ -1181,22 +1013,23 @@ class PersonalizedStockTrader:
                         yest_return_rate = self.user_profile["yest_returns"][stock]  # 昨日涨跌幅
                         shares = self.user_profile["cur_positions"][stock]['shares']  # 持仓股数
                         ratio = self.user_profile["cur_positions"][stock]['ratio']  # 持仓占比
-                        stock_details_str += f"- 股票代码：{stock},名称：{stock_info['name'].iloc[0]},行业：{stock_info['industry'].iloc[0]};持仓{shares:,}股，持仓占比为{ratio}%,持仓总市值{market_value:,}元，上个交易日这只股票{'涨了' if yest_return_rate >= 0 else '跌了'}{abs(yest_return_rate)}%，它总共让你{'赚了' if total_profit_rate >= 0 else '亏了'}{abs(total_profit_rate)}%；\n"
+                        stock_details_str += f"- 指数代码：{stock},名称：{stock_info['name'].iloc[0]},行业：{stock_info['industry'].iloc[0]};持仓{shares:,}股，持仓占比为{ratio}%,持仓总市值{market_value:,}元，{self.stock_profile_dict[stock]}上个交易日这只股票{'涨了' if yest_return_rate >= 0 else '跌了'}{abs(yest_return_rate)}%，它总共让你{'赚了' if total_profit_rate >= 0 else '亏了'}{abs(total_profit_rate)}%\n"
                     else:
-                        stock_details_str += f"- 股票代码：{stock}，名称：{stock_info['name'].iloc[0]}，行业：{stock_info['industry'].iloc[0]}，没有任何持仓信息，属于系统推荐股票；\n"
+                        stock_data = df_stock[(df_stock['stock_id'] == stock) & (df_stock['date'] <= yesterday)].sort_values('date', ascending=False).iloc[0]
+                        yest_return_rate = stock_data['pct_chg']
+                        price = stock_data['close_price']
+                        stock_details_str += f"- 指数代码：{stock}，名称：{stock_info['name'].iloc[0]}，行业：{stock_info['industry'].iloc[0]}，{self.stock_profile_dict[stock]}没有任何持仓信息，属于系统推荐指数，推荐原因为{'这只指数'+'涨了' if yest_return_rate >= 0 else '跌了'}{abs(yest_return_rate)}%，{'涨势良好' if yest_return_rate >= 0 else '是潜在的加仓机会'}，前一天收盘价为{price}元\n"
             else:
-                stock_details_str += f'股票代码：{stock}未查询到任何相关信息。'
+
+                stock_details_str += f'指数代码：{stock}未查询到任何相关信息。'
         return stock_details_str.strip()
 
     def _get_user_indicators(self):
         type = self.user_strategy
-        n = random.randint(2, len(MAPPING_INDICATORS[type]))
-        selected_type_indicators = random.sample(MAPPING_INDICATORS[type], n)
+        n = random.randint(2, len(MAPPING_INDICATORS2[type]))
+        selected_type_indicators = random.sample(MAPPING_INDICATORS2[type], n)
 
-        m = random.randint(0, min(2, len(MAPPING_INDICATORS['宏观指标'])))
-        selected_macro_indicators = random.sample(MAPPING_INDICATORS['宏观指标'], m)
-
-        result_list = list(selected_type_indicators + selected_macro_indicators)
+        result_list = list(selected_type_indicators)
         return result_list
 
     def _data_collection(self, debug) -> dict:
@@ -1208,69 +1041,11 @@ class PersonalizedStockTrader:
         days_before = random.randint(5, 15)
         start_date = end_date - pd.Timedelta(days=days_before)
 
-        # tmp_conversation_history = self.conversation_history.copy()
-        # data_agent = self.base_agent
-        # data_response = data_agent.get_response(messages=tmp_conversation_history)
-        # data_response = data_response.get("response")
-
-        # # 异常处理
-        # data_args = {}
-        # data_args = parse_response_yaml(response=data_response, max_retries=3, prompt='Make sure your date is as this format: %Y-%m-%d')
-        # # print_debug(f"Data collection response: {data_args}", debug)
-
-        # # 异常处理
-        # if data_args.get('indicators', []) != []:
-        #     data_args['indicators'] = [a for a in data_args['indicators'] if a in INDICATORS]
-        # else:
-        #     num_indicators = random.randint(1, 5)
-        #     data_args['indicators'] = random.sample(INDICATORS, num_indicators)
-
-        # # 异常处理
-        # max_start_date = pd.to_datetime(self.cur_date) - pd.Timedelta(days=15)
-        # max_end_date = pd.to_datetime(self.cur_date) - pd.Timedelta(days=1)
-
-        # # 处理 start_date
-        # start_date_str = data_args.get('start_date', max_start_date.strftime('%Y-%m-%d'))
-        # try:
-        #     start_date = pd.to_datetime(start_date_str)
-        # except (ValueError, TypeError):
-        #     start_date = max_start_date
-        #     print(f"无法解析start_date: {start_date_str}，使用默认值: {start_date}")
-
-        # # 确保start_date不早于15天前
-        # if start_date < max_start_date:
-        #     start_date = max_start_date
-
-        # # 处理 end_date
-        # end_date_str = data_args.get('end_date', max_end_date.strftime('%Y-%m-%d'))
-        # try:
-        #     end_date = pd.to_datetime(end_date_str)
-        # except (ValueError, TypeError):
-        #     end_date = max_end_date
-        #     print(f"无法解析end_date: {end_date_str}，使用默认值: {end_date}")
-
-        # # 确保end_date不超过昨天
-        # if end_date > max_end_date:
-        #     end_date = max_end_date
-
-        # reason = data_args.get('reason', '')
-
         data = self.get_stock_data(stock_codes=self.stocks_to_deal,
                                    indicators=data_args["indicators"],
                                    start_date=start_date.strftime('%Y-%m-%d'),
                                    end_date=end_date.strftime('%Y-%m-%d'))
-        # print_debug(f"Collected data: {json.dumps(data, indent=2, ensure_ascii=False)}", debug)
-        # data_2 = json.loads(json.dumps(data, ensure_ascii=False))
         data_2 = data
-    #     self.conversation_history.append({
-    #         "role": "assistant",
-    #         "content": f"""我的需求如下：
-    # - 查询指标：{', '.join(data_args['indicators'])}
-    # - 查询时间范围：{start_date.strftime('%Y-%m-%d')} 至 {end_date.strftime('%Y-%m-%d')}
-    # - 理由：{reason}
-    # """
-    #     })
-
         self.conversation_history.append({
             "role": "assistant",
             "content": f"""我的需求如下：
@@ -1279,7 +1054,9 @@ class PersonalizedStockTrader:
     """
         })
         ts_agent = self.base_agent
-        ts_response = ts_agent.get_response(user_input=f"""请全面总结这段时间序列信息：\n{self._format_data_for_prompt(data_2)}""")
+        # fix
+        ts_response = ts_agent.get_response(
+            user_input=f"""以下是关于{len(self.stocks_to_deal)}个指数的时序数据，请从投资者的角度，分析每只指数的表现，并输出一段简短的文字总结（比如趋势、资金流动、关键时间点等），请保持客观理性，不要输出任何主观判断。\n{self._format_data_for_prompt(data_2)}""", temperature=0.2)
         ts_response = ts_response.get("response")
 
         # self.conversation_history.append({
@@ -1287,9 +1064,9 @@ class PersonalizedStockTrader:
         #     "content": f"""根据你的需求，我帮你查询到了如下股票相关信息：\n{self._format_data_for_prompt(data_2)}\n
         #     """
         # })
-        self.conversation_history.append({"role": "user", "content": f"根据你的需求，我帮你查询到了如下股票相关信息：\n{ts_response}"})
+        self.conversation_history.append({"role": "user", "content": f"根据你的需求，我帮你查询并总结了如下行业指数相关信息：\n{ts_response}"})
 
-        return 
+        return
 
     def _make_final_decision(self, debug: bool = False) -> dict:
         print_debug("Generating final decision...", debug)
@@ -1301,7 +1078,7 @@ class PersonalizedStockTrader:
 
         # 生成一个user的对话
         self.conversation_history.append({"role": "user",
-                                          "content": f"""现在是做出最终交易决策的时候。请基于之前的分析，结合你的投资风格和人设，首先进行分析，然后对每支股票做出具体的交易决策并给出你的理由。"""})
+                                          "content": f"""现在是做出最终交易决策的时候。请基于之前的分析，结合你的投资风格和人设，首先进行分析，然后对每行业指数做出具体的交易决策并给出你的理由。"""})
 
         # 分析
         analysis_prompt = TradingPrompt.get_analysis_prompt(self.stocks_to_deal)
@@ -1355,15 +1132,13 @@ class PersonalizedStockTrader:
 
                 response2 = response2.get("response")
                 decision_args = {}
-                # help_prompt = 'The stocks to trade are: ' + ','.join(self.stocks_to_deal)+' , please make sure the stock code is correct\n'
                 help_prompt = f'''Make sure your YAML output should following this format:\n {yaml_template}'''
                 decision_args['stock_decisions'] = parse_response_yaml(response2, max_retries=3, prompt=help_prompt)
                 decision_args['stock_decisions'] = {key.upper(): value for key, value in decision_args['stock_decisions'].items()}
-                # decision_args['stock_decisions'] = preprocess_stock_decisions(decision_args['stock_decisions'])
+
                 decision_args['stock_decisions'] = convert_values_to_float(decision_args['stock_decisions'])
                 print_debug(f"Decision response: {decision_args}", debug)
-                # 验证决策
-                # decision_args = self._validate_decision(decision_args, price_info, cur_positions, available_position)
+
                 decision_args = self._polish_decision(decision_args, cur_positions, available_position)
                 decision_result = TradingPrompt.decision_json_to_prompt(decision_args, self.potential_stock_list)
                 self.conversation_history.append({"role": "assistant", "content": f"""{analysis_result}\n{decision_result}"""})
@@ -1392,91 +1167,6 @@ class PersonalizedStockTrader:
         self.conversation_history.append({"role": "assistant", "content": f"""{analysis_result}\n{decision_result}"""})
 
         return default_decision
-
-    def _validate_decision(self, decision_args: dict, price_info: dict, cur_positions: dict, available_position: float) -> dict:
-        validation_errors = set()  # 使用集合来去重
-
-        # 1. 验证基本字段
-        required_fields = ["stock_decisions"]
-        missing_fields = [field for field in required_fields if field not in decision_args]
-        if missing_fields:
-            validation_errors.add("必须满足所有给定字段")
-
-        # 2. 验证 stock_decisions 格式
-        stock_decisions = decision_args.get("stock_decisions")
-        if not isinstance(stock_decisions, dict):
-            validation_errors.add("stock_decisions 必须是一个字典，键为股票代码，值为决策信息")
-        else:
-            total_target_position = 0
-
-            for stock_code, decision in stock_decisions.items():
-                # 检查 stock_code 是否在 self.stocks_to_deal 中
-                if stock_code not in self.stocks_to_deal:
-                    validation_errors.add(f"股票代码必须在待处理的股票列表：{self.stocks_to_deal} 中")
-
-                # 3. 将决策信息统一转换为字典
-                decision_dict = {}
-                if isinstance(decision, list):
-                    # 处理列表格式的决策信息
-                    for item in decision:
-                        if isinstance(item, dict):
-                            decision_dict.update(item)
-                elif isinstance(decision, dict):
-                    # 处理字典格式的决策信息
-                    decision_dict = decision
-                else:
-                    validation_errors.add(f"决策信息必须是列表或字典")
-                    continue  # 跳过后续验证
-
-                # 4. 验证 action 值
-                action = decision_dict.get("action")
-                if action not in ["buy", "sell", "hold"]:
-                    validation_errors.add(f"股票的 action 必须是 'buy'、'sell' 或 'hold' 之一")
-
-                # 新增验证：对于在 self.potential_stock_list 的股票，验证 action 是否为 hold 或 buy
-                if stock_code in self.potential_stock_list and action not in ["hold", "buy"]:
-                    validation_errors.add(f"潜在股票（之间持仓为0） 的 action 必须是 'hold' 或 'buy' 之一")
-
-                # 5. 验证 cur_position
-                cur_position = decision_dict.get("cur_position")
-                expected_cur_position = cur_positions.get(stock_code, {}).get('ratio', 0)
-                if not isinstance(cur_position, (int, float)) or cur_position < 0 or cur_position > 100:
-                    validation_errors.add(f"股票的cur_position 必须是 0 到 100 之间的数字")
-                elif cur_position != expected_cur_position:
-                    validation_errors.add(f"股票的cur_position 必须与提供的持仓信息一致")
-
-                # 6. 验证 target_position
-                target_position = decision_dict.get("target_position")
-                if not isinstance(target_position, (int, float)) or target_position < 0 or target_position > 100:
-                    validation_errors.add(f"股票的target_position 必须是 0 到 100 之间的数字")
-                else:
-                    total_target_position += target_position
-
-                # 7. 验证 target_price
-                target_price = decision_dict.get("target_price")
-                if not isinstance(target_price, (int, float)):
-                    validation_errors.add(f"股票的 target_price 必须是有效的数字")
-                elif action in ["buy", "sell"] and not (price_info[stock_code]['limit_down'] <= target_price <= price_info[stock_code]['limit_up']):
-                    validation_errors.add(f"股票的 target_price 必须在跌停价和涨停价之间")
-
-                # 验证 hold 时 target_position 和 target_price 为 0
-                if action == "hold":
-                    if target_position != cur_position:
-                        decision_dict["target_position"] = cur_position
-
-                # 更新决策信息
-                stock_decisions[stock_code] = decision_dict
-
-            # 8. 验证 target_positions 之和
-            if total_target_position > available_position:
-                validation_errors.add("所有股票的 target_position 之和不能超过可用仓位")
-
-        # 如果有验证错误，抛出异常
-        if validation_errors:
-            formatted_errors = "## 请注意:\n- " + "\n- ".join(validation_errors)
-            raise ValueError(formatted_errors)
-
-        return decision_args
 
     def _read_news(self):
         """
@@ -1603,7 +1293,7 @@ class PersonalizedStockTrader:
             if new_decision["action"] == "sell":
                 if trading_position > cur_position:
                     trading_position = cur_position
-                new_decision["target_position"] = cur_position - trading_position
+                new_decision["target_position"] = round(cur_position - trading_position, 2)
                 new_decision["cur_position"] = cur_position
                 available_position += trading_position
 

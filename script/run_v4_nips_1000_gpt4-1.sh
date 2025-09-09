@@ -14,7 +14,7 @@ timestamp=$(date +%Y%m%d_%H%M%S)
 log_file="${log_dir}/simulation_${timestamp}.log"
 
 # Run simulation with nohup
-nohup python simulation_ablation_v4_nips_activate.py \
+nohup python simulation.py \
     --log_dir $log_dir \
     --forum_db "${log_dir}/forum_${length}.db" \
     --user_db "${log_dir}/user_${length}.db" \
