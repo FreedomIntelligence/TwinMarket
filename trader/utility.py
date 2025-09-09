@@ -114,10 +114,9 @@ SCHEMA = {
         }
     }}
 
-COMPANY_INFO_PATH = '/home/export/base/ycsc_wangbenyou/zhangyf/online1/AI_stock_market/test_agent_zyf/basic_data/company_info.csv'
 # STOCK_DATA_PATH='/home/export/base/ycsc_wangbenyou/zhangyf/online1/AI_stock_market/test_agent_zyf/stock_data.csv'
-STOCK_PROFILE_PATH = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB_zyf_0109/stock_profile.csv'
-STOCK_PROFILE_PATH2 = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/TwinMarket/data/stock_profile.csv'
+STOCK_PROFILE_PATH = 'data/UserDB_zyf_0109/stock_profile.csv'
+STOCK_PROFILE_PATH2 = 'data/stock_profile.csv'
 STOCK_PROFILE_DICT={
 'TLEI': '该指数为交通与运输指数，包含2支成分股，包括中远海控(SH601919, 权重52.34%)、中国船舶(SH600150, 权重47.66%)。',
 'MEI': '该指数为制造业指数，包含8支成分股，包括隆基绿能(SH601012, 权重16.51%)、海尔智家(SH600690, 权重15.78%)、三一重工(SH600031, 权重15.29%)、国电南瑞(SH600406, 权重14.6%)、上汽集团(SH600104, 权重11.98%)、通威股份(SH600438, 权重10.92%)、特变电工(SH600089, 权重10.12%)、长城汽车(SH601633, 权重4.8%)。',
@@ -309,7 +308,7 @@ def parse_response_yaml(response: str, max_retries: int = 3, log_dir: str = "./"
     # file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
     # error_logger.addHandler(file_handler)
 
-    fixAgent = BaseAgent(config_path="./config_random/claude_3.5_sonnet.yaml")
+    fixAgent = BaseAgent(config_path="./config/api.yaml")
     retries = 0
 
     while retries <= max_retries:

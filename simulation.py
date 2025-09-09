@@ -57,9 +57,11 @@ def process_user_input(user_id, user_db, forum_db, df_stock, current_date, debug
 
         # 获取用户信念值
         try:
-            if not day_1st:
+            if not day_1st and isinstance(belief_args, dict):
+                # 从forum数据库获取belief (非第一天)
                 belief = belief_args.get(user_id)[0]['belief']
             else:
+                # 从CSV文件获取belief (第一天或fallback)
                 belief = belief_args[belief_args['user_id'] == user_id].iloc[0]['belief']
         except Exception as e:
             print(f"Error getting belief for user {user_id}: {e}")
@@ -122,9 +124,9 @@ def init_simulation(
     node: int = 1000,
     log_dir: str = 'logs',
     prob_of_technical: float = 0.3,
-    belief_init_path: str = 'util/belief/belief_100.csv',
+    belief_init_path: str = 'util/belief/belief_1000_0129.csv',
     top_n_user: float = 0.1,
-    config_path: str='./config_random/zyf.yaml',
+    config_path: str='./config/api.yaml',
     activate_prob: float = 1.0
 ):
     """
@@ -211,6 +213,7 @@ def init_simulation(
         
         # gpt-4o-mini
         config_list=[config_path]
+        print(config_list)
         # config_list = ['./config_random/zyf.yaml']
         # gemini-2.0-flash-exp
         # config_list = ['./config_random/gemini-2.0-flash-exp.yaml']
@@ -278,7 +281,7 @@ def init_simulation(
                     post_args_list.append((user_id, post_response_args))
                 except TimeoutError:
                     print(f"[INPUT] Timeout for user {user_id}: Processing exceeded 30 minutes. Retrying with a different config path.")
-                    fallback_config_path = './config_random/gaochao_4o_mini.yaml'
+                    fallback_config_path = './config/api.yaml'
                     retry_future = executor.submit(
                         process_user_input, user_id, user_db, forum_db, df_stock, current_date, debug, day_1st, current_user_graph, import_news, df_strategy, is_trading_day, top_user, log_dir, prob_of_technical, user_config_mapping, activate_maapping, belief_args, fallback_config_path
                     )
@@ -389,8 +392,8 @@ def parse_args():
     parser.add_argument("--top_n_user", type=float, default=0.1, help="Top n user.")
     parser.add_argument("--log_dir", type=str, default="logs_100_0128_claude", help="Directory to save log files.")
     parser.add_argument("--prob_of_technical", type=float, default=0.5, help="Probability of technical noise trader.")
-    parser.add_argument("--belief_init_path", type=str, default="util/belief/belief_100_0125.csv", help="Path to the belief init file.")
-    parser.add_argument("--config_path",type=str,default='./config_random/zyf.yaml', help='config path')
+    parser.add_argument("--belief_init_path", type=str, default="util/belief/belief_1000_0129.csv", help="Path to the belief init file.")
+    parser.add_argument("--config_path",type=str,default='./config/api.yaml', help='config path')
     parser.add_argument("--activate_prob", type=float, default=1.0)
     return parser.parse_args()
 

@@ -54,3 +54,9 @@ trader/cache/
 *.log
 *.tmp
 *.temp
+# 配置文件(可能包含API密钥)
+config/
+*.yaml
+*.yml
+
+logs*/

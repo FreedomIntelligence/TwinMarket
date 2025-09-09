@@ -795,7 +795,7 @@ def process_trading_day(decisions: list[dict],
                         last_prices: dict,
                         current_date: str,
                         output_dir: str = "simulation_results",
-                        db_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB/sys_100.db',
+                        db_path: str = 'data/UserDB/sys_100.db',
                         df_stock: pd.DataFrame = None,
                         df_stock_profile_real: pd.DataFrame = None,
                         json_file_path: str = None):
@@ -838,8 +838,8 @@ def process_trading_day(decisions: list[dict],
 
 def update_stock_data_table(results: dict,
                             current_date: str,
-                            db_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB/sys_100.db',
-                            real_data_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB/stock_data.csv',
+                            db_path: str = 'data/UserDB/sys_100.db',
+                            real_data_path: str = 'data/UserDB/stock_data.csv',
                             output_dir: str = 'simulation_results',
                             df_stock: pd.DataFrame = None):
     """
@@ -1019,7 +1019,7 @@ def update_stock_data_table(results: dict,
 
 def update_trading_details_table(
         current_date: str,
-        db_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB/sys_100.db',
+        db_path: str = 'data/UserDB/sys_100.db',
         output_dir: str = 'simulation_results',
         df_stock_profile_real: pd.DataFrame = None):
     """
@@ -1437,7 +1437,7 @@ def test_matching_system(
     current_date: str,  # '2023-06-15
     json_file_path: str = None,
     db_path: str = None,
-    base_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network'
+    base_path: str = '.'
 ):
     """
     测试撮合系统
@@ -1451,7 +1451,7 @@ def test_matching_system(
     # 设置默认路径
 
     if json_file_path is None:
-        json_file_path = f"/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/TwinMarket/logs/2023-06-15.json"
+        json_file_path = f"logs/2023-06-15.json"
     if db_path is None:
         db_path = f"{base_path}/data/UserDB/sys_100.db"
 
@@ -1492,8 +1492,8 @@ def test_matching_system(
 
 def update_stock_data_table_holiday(
                             current_date: str,
-                            db_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB/sys_100.db',
-                            real_data_path: str = '/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/UserDB/stock_data.csv',
+                            db_path: str = 'data/UserDB/sys_100.db',
+                            real_data_path: str = 'data/UserDB/stock_data.csv',
                             df_stock: pd.DataFrame = None):
     """
     更新数据库中的 StockData 表。
