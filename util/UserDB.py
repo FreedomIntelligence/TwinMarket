@@ -1,23 +1,80 @@
-import numpy as np
-import json
+"""
+用户数据库管理和社交网络分析模块
+
+该模块负责管理用户数据库的所有操作，包括用户信息查询、交易记录分析、
+社交网络图构建等功能。是整个交易系统的用户数据管理核心。
+
+核心功能：
+- 用户档案管理：用户基本信息、投资偏好、交易历史等
+- 交易记录分析：用户交易行为的统计和分析
+- 社交网络构建：基于交易相似性构建用户关系网络
+- 图数据操作：网络图的保存、加载、更新和可视化
+- 行业分析：用户投资行业偏好的统计和分析
+
+技术特性：
+- 支持大规模用户数据处理
+- 基于NetworkX的复杂网络分析
+- 时间衰减的相似性计算
+- 缓存优化的图操作
+- 可视化的网络图展示
+
+适用场景：
+- 用户行为分析
+- 投资偏好建模
+- 社交影响力分析
+- 推荐系统支持
+- 风险传播分析
+"""
+
+# 标准库导入
 import datetime
+import json
 import os
-import sqlite3
-import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
-import random
 import pickle
-from typing import Optional
+import random
+import sqlite3
 from collections import defaultdict
 from datetime import datetime
+from typing import Optional
+
+# 第三方库导入
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
+
+# 本地模块导入
 from . import IndustryDict
 
+# ============================ 全局配置 ============================
+
+# 默认用户数据库路径
 DB_PATH = 'data/UserDB/sys_100.db'
 
 
 def get_top_industry_and_category(user_id, db_path=DB_PATH):
-    """Get the most frequently traded industry and its categories for a user."""
+    """
+    获取用户最常交易的行业及其分类信息
+    
+    该函数分析用户的历史交易记录，找出用户最常交易的行业，
+    并返回该行业对应的中英文分类信息。
+    
+    Args:
+        user_id (str): 用户ID
+        db_path (str): 数据库文件路径，默认使用全局DB_PATH
+        
+    Returns:
+        tuple: (top_industry, category_ch, category_eng)
+            - top_industry (str): 最常交易的行业名称
+            - category_ch (str): 中文行业分类
+            - category_eng (str): 英文行业分类
+            如果用户没有交易记录，返回 (None, None, None)
+            
+    Note:
+        - 基于交易频次统计，不考虑交易金额
+        - 使用IndustryDict模块进行行业分类映射
+        - 只返回交易次数最多的单个行业
+    """
 
     def find_category_ch(industry):
         for category, industries in IndustryDict.ch.items():
@@ -61,14 +118,35 @@ def get_top_industry_and_category(user_id, db_path=DB_PATH):
 
 def get_user_profile(user_id: str, db_path: str = DB_PATH, created_at: str = None) -> dict:
     """
-    获取用户的详细信息，并返回一个包含用户信息的字典。
-
+    获取用户的完整档案信息
+    
+    该函数从数据库中查询指定用户在特定时间点的完整档案信息，
+    包括基本信息、投资偏好、持仓情况、收益表现等所有相关数据。
+    
+    数据处理特性：
+    1. JSON字段自动解析：自动处理存储为JSON字符串的复杂字段
+    2. 中文字符支持：确保中文字符的正确解析和显示
+    3. 容错处理：JSON解析失败时保留原始值并给出警告
+    4. 完整性保证：返回用户的所有可用信息字段
+    
     Args:
-        user_id (str): 用户的唯一标识符。
-        db_path (str): 数据库文件路径，默认为 DB_PATH。
-
+        user_id (str): 用户的唯一标识符
+        db_path (str): 数据库文件路径，默认为全局DB_PATH
+        created_at (str): 查询的时间点，格式为'YYYY-MM-DD HH:MM:SS'
+        
     Returns:
-        dict: 包含用户详细信息的字典。
+        dict: 包含用户详细信息的字典，主要字段包括：
+            - 基本信息：gender, location, user_type
+            - 行为特征：disposition_effect, lottery_preference等
+            - 财务信息：current_cash, total_value, return_rate等
+            - 持仓信息：cur_positions, stock_returns等
+            - 投资偏好：fol_ind, strategy等
+            如果用户不存在，返回空字典{}
+            
+    Note:
+        - 自动处理JSON格式的复杂字段
+        - 支持中文字符的正确编码
+        - 包含完善的错误处理机制
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -241,16 +319,30 @@ def save_graph(G: nx.Graph,
                output_dir: str = 'data/UserDB',
                format: str = 'pickle') -> bool:
     """
-    Save NetworkX graph to file in GraphML and/or Pickle format
-
+    保存NetworkX图到文件
+    
+    该函数支持将用户关系网络图保存为多种格式，便于后续加载和分析。
+    支持GraphML（可读性好）和Pickle（性能好）两种格式。
+    
+    格式特点：
+    - GraphML：XML格式，可读性好，支持跨平台，但文件较大
+    - Pickle：二进制格式，加载速度快，文件小，但Python专用
+    - Both：同时保存两种格式
+    
     Args:
-        G (nx.Graph): NetworkX graph to save
-        filename (str): Base filename without extension
-        output_dir (str): Directory to save files
-        format (str): 'graphml', 'pickle' or 'both'
-
+        G (nx.Graph): 要保存的NetworkX图对象
+        filename (str): 基础文件名（不含扩展名）
+        output_dir (str): 保存目录，默认'data/UserDB'
+        format (str): 保存格式，'graphml'、'pickle'或'both'
+        
     Returns:
-        bool: True if save successful, False otherwise
+        bool: 保存成功返回True，失败返回False
+        
+    Note:
+        - 会自动创建输出目录
+        - 包含完善的异常处理
+        - GraphML格式便于外部工具分析
+        - Pickle格式加载速度更快
     """
     try:
         # Create output directory if it doesn't exist
@@ -300,147 +392,7 @@ def load_graph(filename: str,
         return None
 
 
-# def build_graph(
-#     sparsity_factor: float = 0.15,
-#     db_path: str = DB_PATH,
-#     save: bool = True,
-#     save_name: str = 'user_graph',
-#     start_date: str = '2023-01-01',
-#     end_date: str = '2023-12-31'
-# ) -> nx.Graph:
-#     """
-#     基于用户交易相似性构建稀疏图。
-#     自动获取所有用户的交易记录。
 
-#     参数:
-#         sparsity_factor: 保留边的比例 (0-1)
-#         db_path: 数据库路径
-#         save: 是否保存图
-#         save_name: 保存的文件名
-#         start_date: 交易记录的开始日期
-#         end_date: 交易记录的结束日期
-
-#     返回:
-#         带有用户相似性和行业属性的 NetworkX 图
-
-#     异常:
-#         ValueError: 如果无法获取交易记录或数据无效
-#     """
-#     try:
-#         # 获取所有用户ID
-#         conn = sqlite3.connect(db_path)
-#         user_ids = pd.read_sql_query("SELECT DISTINCT user_id FROM Profiles", conn)['user_id'].tolist()
-#         conn.close()
-
-#         # 获取所有用户的交易记录
-#         trading_records_df_list = []
-#         for user_id in user_ids:
-#             user_trading_records_df, _ = get_user_trading_records(
-#                 user_id=user_id,
-#                 db_path=db_path,
-#                 start_date=start_date,
-#                 end_date=end_date
-#             )
-#             if user_trading_records_df is not None:
-#                 user_trading_records_df['user_id'] = user_id
-#                 trading_records_df_list.append(user_trading_records_df)
-
-#         # 合并所有用户的交易记录
-#         trading_records_df = pd.concat(trading_records_df_list, ignore_index=True)
-
-#         # 获取每个用户的股票组合
-#         user_portfolios = {}
-#         for user_id in user_ids:
-#             user_trading_records = trading_records_df[trading_records_df['user_id'] == user_id]
-#             if not user_trading_records.empty:
-#                 user_portfolios[user_id] = set(user_trading_records['stock_id'])
-#             else:
-#                 user_portfolios[user_id] = set()  # 如果用户没有交易记录，分配空集合
-
-#         # 计算用户之间的相似性得分
-#         edge_scores = []
-#         for user1, stocks1 in user_portfolios.items():
-#             for user2, stocks2 in user_portfolios.items():
-#                 if user1 >= user2:
-#                     continue
-
-#                 # 计算 Jaccard 相似性
-#                 intersection = len(stocks1 & stocks2)
-#                 union = len(stocks1 | stocks2)
-#                 if union == 0:
-#                     continue
-
-#                 similarity = intersection / union
-#                 if similarity > 0:
-#                     edge_scores.append((user1, user2, similarity))
-
-#         # 按得分排序
-#         edge_scores.sort(key=lambda x: x[2], reverse=True)
-
-#         # 构建图
-#         G = nx.Graph()
-#         G.add_nodes_from(user_ids)  # 将所有用户添加为节点
-
-#         # 确保每个节点至少有一条边
-#         connected_nodes = set()
-#         for user1, user2, score in edge_scores:
-#             if user1 not in connected_nodes or user2 not in connected_nodes:
-#                 G.add_edge(user1, user2, weight=score)
-#                 connected_nodes.add(user1)
-#                 connected_nodes.add(user2)
-
-#         # 处理孤立节点
-#         isolated_nodes = set(user_ids) - connected_nodes
-#         for user in isolated_nodes:
-#             # 找到与当前用户相似性最高的用户
-#             best_match = None
-#             best_score = 0
-#             for other_user in connected_nodes:
-#                 if other_user in user_portfolios:
-#                     stocks1 = user_portfolios[user]
-#                     stocks2 = user_portfolios[other_user]
-#                     intersection = len(stocks1 & stocks2)
-#                     union = len(stocks1 | stocks2)
-#                     if union == 0:
-#                         continue
-#                     similarity = intersection / union
-#                     if similarity > best_score:
-#                         best_score = similarity
-#                         best_match = other_user
-
-#             # 添加边
-#             if best_match is not None:
-#                 G.add_edge(user, best_match, weight=best_score)
-#                 connected_nodes.add(user)
-
-#         # 根据稀疏因子保留剩余的边
-#         num_edges_to_keep = int(len(edge_scores) * sparsity_factor)
-#         for i in range(len(edge_scores)):
-#             if len(G.edges) >= num_edges_to_keep:
-#                 break
-#             user1, user2, score = edge_scores[i]
-#             if not G.has_edge(user1, user2):
-#                 G.add_edge(user1, user2, weight=score)
-
-#         # 为每个节点添加行业和类别属性
-#         for user_id in G.nodes():
-#             industry, category_ch, category_eng = get_top_industry_and_category(user_id=user_id, db_path=db_path)
-#             if industry is None or category_ch is None or category_eng is None:
-#                 industry = industry if industry else '未知'
-#                 category_ch = category_ch if category_ch else '未知'
-#                 category_eng = category_eng if category_eng else 'Unknown'
-#             G.nodes[user_id]['industry'] = industry
-#             G.nodes[user_id]['category_ch'] = category_ch
-#             G.nodes[user_id]['category_eng'] = category_eng
-
-#         # 保存图
-#         if save:
-#             save_graph(G=G, filename=save_name, output_dir='data/UserDB', format='pickle')
-
-#         return G
-
-#     except Exception as e:
-#         raise ValueError(f"Failed to build user similarity graph: {str(e)}")
 
 
 def build_graph(
@@ -585,24 +537,51 @@ def build_graph_new(
     output_dir: str = 'data/UserDB/graph'  # 保存的目录
 ) -> nx.Graph:
     """
-    基于用户购买股票的行业相似性构建图，并保留节点的属性。
-    考虑时间衰减的影响。
-
-    参数:
-        db_path: 数据库路径
-        start_date: 交易记录的开始日期
-        end_date: 交易记录的结束日期
-        similarity_threshold: 相似性阈值，只有超过该值的相似性才会被添加为边
-        time_decay_factor: 时间衰减因子，控制时间对相似性的影响
-        save: 是否保存图
-        save_name: 保存的文件名
-        output_dir: 保存的目录
-
-    返回:
-        带有用户相似性和节点属性的 NetworkX 图
-
-    异常:
-        ValueError: 如果无法获取交易记录或数据无效
+    构建基于行业相似性和时间衰减的用户关系网络图
+    
+    该函数是用户关系网络构建的核心算法，基于用户的投资行业偏好
+    和时间衰减因子构建复杂的社交网络图。相比传统的股票相似性，
+    行业相似性更能反映用户的投资理念和策略倾向。
+    
+    核心算法特性：
+    1. 行业相似性：基于用户投资的行业分布计算相似性
+    2. 时间衰减：近期交易的权重更高，体现投资偏好的变化
+    3. 加权Jaccard相似性：考虑交易频次和时间权重的相似性计算
+    4. 孤立节点处理：确保所有用户都在网络中有连接
+    5. 节点属性丰富：包含行业偏好、分类等详细信息
+    
+    算法流程：
+    1. 获取所有用户的交易记录
+    2. 按行业分组并应用时间衰减权重
+    3. 计算用户间的加权行业相似性
+    4. 构建网络图并添加边
+    5. 处理孤立节点
+    6. 添加节点属性信息
+    
+    Args:
+        db_path (str): 用户数据库文件路径
+        start_date (str): 交易记录分析的开始日期
+        end_date (str): 交易记录分析的结束日期
+        similarity_threshold (float): 相似性阈值，低于此值的连接将被忽略
+        time_decay_factor (float): 时间衰减因子，控制历史交易的权重衰减速度
+        save (bool): 是否保存构建的图到文件
+        save_name (str): 保存的文件名（不含扩展名）
+        output_dir (str): 图文件保存目录
+        
+    Returns:
+        nx.Graph: 构建完成的用户关系网络图，包含：
+            - 节点：所有用户ID
+            - 边：用户间的相似性连接（权重为相似性得分）
+            - 节点属性：industry, category_ch, category_eng
+            
+    Raises:
+        ValueError: 当无法获取交易记录或数据处理失败时抛出
+        
+    Note:
+        - 使用指数衰减函数计算时间权重
+        - 相似性基于加权Jaccard系数
+        - 自动处理孤立节点以确保网络连通性
+        - 支持大规模用户网络的高效构建
     """
     try:
         # 获取所有用户ID

@@ -1,23 +1,82 @@
-from typing import Optional, Dict
-import os
-import pandas as pd
-import numpy as np
-import faiss
-from tqdm.auto import tqdm
-import pickle
-from pathlib import Path
+"""
+智能信息检索数据库模块
+
+该模块实现了一个基于向量相似性的智能信息检索系统，专门用于处理
+新闻、公告等文本信息的高效检索和相关性分析。
+
+核心功能：
+- 文本向量化：使用API服务将文本转换为高维向量表示
+- 向量数据库：基于FAISS的高性能向量相似性搜索
+- 批量处理：支持大规模文本数据的并行处理
+- 多类型支持：支持新闻、公告、CCTV新闻等多种信息类型
+- 智能检索：基于语义相似性的精确信息检索
+
+技术架构：
+- 嵌入模型：支持多种API服务的文本嵌入
+- 向量索引：FAISS高性能向量检索引擎
+- 数据管理：完整的元数据管理和持久化
+- 并发处理：多进程并行的数据处理能力
+- 缓存机制：向量和元数据的高效缓存
+
+数据类型支持：
+- announcement：公司公告信息
+- cctv：央视新闻内容
+- long_news：长篇新闻报道
+- short_news：短篇新闻快讯
+
+适用场景：
+- 投资信息检索
+- 新闻相关性分析
+- 公告影响评估
+- 市场情报收集
+- 智能投资助手
+"""
+
+# 标准库导入
 import multiprocessing as mp
-from typing import List, Dict, Optional
-# import torch
+import os
+import pickle
 import random
+from pathlib import Path
+from typing import Dict, List, Optional
+
+# 第三方库导入
+import faiss
+import numpy as np
+import pandas as pd
 import requests
 import yaml
+from tqdm.auto import tqdm
 
-# Set multiprocessing start method
+# 设置多进程启动方法
 mp.set_start_method('spawn', force=True)
 
 
 class EmbeddingWorker:
+    """
+    文本嵌入向量生成工作器
+    
+    该类负责调用外部API服务将文本转换为高维向量表示，
+    是整个信息检索系统的基础组件。支持多API密钥的负载均衡。
+    
+    核心功能：
+    - API配置管理：从YAML文件加载API配置信息
+    - 多密钥支持：随机选择API密钥实现负载均衡
+    - 文本向量化：将文本内容转换为数值向量
+    - 错误处理：完善的API调用错误处理机制
+    - 向量标准化：确保向量格式的一致性
+    
+    Attributes:
+        config (Dict): API配置信息
+        api_keys (List): API密钥列表
+        model_name (str): 使用的嵌入模型名称
+        base_url (str): API服务的基础URL
+        
+    Note:
+        - 支持多个API密钥的随机选择
+        - 自动处理向量维度和格式问题
+        - 包含完整的异常处理和错误日志
+    """
     def __init__(self, config_path: str = "config/embedding.yaml"):
         self.config = self._load_config(config_path)
         self.api_keys = self.config["api_key"]
@@ -81,6 +140,37 @@ class EmbeddingWorker:
 
 
 class InformationDB:
+    """
+    智能信息检索数据库主类
+    
+    该类是整个信息检索系统的核心，集成了文本嵌入、向量索引、
+    数据管理等功能，提供了完整的语义搜索能力。
+    
+    系统架构：
+    1. 嵌入层：EmbeddingWorker负责文本向量化
+    2. 索引层：FAISS向量索引提供高速相似性搜索
+    3. 数据层：元数据管理和持久化存储
+    4. 服务层：提供统一的检索接口
+    
+    核心特性：
+    - 语义搜索：基于向量相似性的智能搜索
+    - 多类型支持：支持多种新闻和公告类型
+    - 批量操作：高效的批量检索和处理
+    - 数据持久化：向量索引和元数据的持久化存储
+    - 性能优化：多进程处理和缓存机制
+    
+    Attributes:
+        worker (EmbeddingWorker): 文本嵌入工作器实例
+        index (faiss.Index): FAISS向量索引
+        metadata (List): 文档元数据列表
+        database_dir (Path): 数据库文件目录
+        max_workers (int): 最大并发工作进程数
+        
+    Example:
+        >>> db = InformationDB("config/embedding.yaml", "data/news_db")
+        >>> db.load_database()
+        >>> results = db.search_news(start_date, end_date, "市场趋势", top_k=5)
+    """
     def __init__(self,
                  config_path: str = "config/embedding.yaml",
                  database_dir: str = "data/InformationDB",
@@ -279,7 +369,38 @@ class InformationDB:
                           top_k: int = 3,
                           type: Optional[str] = None) -> List[List[Dict]]:
         """
-        批量搜索新闻
+        批量新闻检索功能 - 高效的多查询并行处理
+        
+        该函数实现了高性能的批量新闻检索，能够同时处理多个查询请求，
+        显著提高检索效率。特别适用于需要同时查询多个关键词的场景。
+        
+        性能优化特性：
+        1. 批量向量化：一次性处理多个查询的向量转换
+        2. 并行检索：使用FAISS的批量搜索能力
+        3. 结果分组：自动将结果按查询分组返回
+        4. 内存优化：高效的向量数组处理
+        5. 容错处理：自动过滤无效查询和结果
+        
+        Args:
+            start_date (pd.Timestamp): 检索开始日期
+            end_date (pd.Timestamp): 检索结束日期
+            queries (List[str]): 查询关键词列表
+            top_k (int): 每个查询返回的最大结果数，默认3个
+            type (Optional[str]): 指定新闻类型过滤，可选
+            
+        Returns:
+            List[List[Dict]]: 批量检索结果，外层列表对应查询，内层列表包含：
+                - distance: 相似性距离（越小越相似）
+                - content: 新闻内容
+                - title: 新闻标题
+                - datetime: 发布时间
+                - type: 新闻类型
+                
+        Note:
+            - 查询顺序与结果顺序一一对应
+            - 自动过滤无效的嵌入向量
+            - 支持灵活的新闻类型过滤
+            - 批量处理显著提高性能
         """
         if not queries or self.index is None:
             return []

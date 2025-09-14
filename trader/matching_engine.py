@@ -1,11 +1,16 @@
 """
-多股票交易撮合系统
+多股票交易撮合引擎系统
 
-功能描述：
-1. 接收所有用户的交易决策，转换为标准订单格式
-2. 按股票分组进行订单撮合
-3. 生成每支股票的每日交易记录和统计信息
-4. 更新数据库中的StockData表，包含技术指标、交易数据和估值指标
+该模块实现了一个完整的股票交易撮合引擎，模拟真实证券交易所的订单撮合机制。
+系统能够处理大规模用户的交易决策，执行智能订单匹配，并维护完整的交易记录。
+
+核心功能：
+1. 智能订单撮合：接收用户交易决策，转换为标准订单格式
+2. 多股票并行处理：按股票分组进行高效的订单撮合
+3. 完整交易记录：生成详细的交易记录和统计信息
+4. 实时数据更新：更新数据库中的股票数据、技术指标和估值指标
+5. 大单资金流分析：追踪和分析大额资金流向
+6. 可视化支持：生成订单簿可视化图表
 
 主要步骤：
 
@@ -114,34 +119,63 @@ results = process_trading_day(decisions, last_prices, current_date)
 10. 估值指标根据当日真实数据和模拟价格的比例进行调整
 """
 
-# TODO:修改transactions表格 --user_id  OK
-# TODO 更新Tradingdetails表  OK
-# TODO ：验证StockData表更新是否正确   --目前写入正确，需要有较多订单，验证撮合交易逻辑+验证具体指标是否正确
-# TODO :更新user_profile
-'''
-How:直接debug运行就行
-'''
+# ============================ 开发状态和待办事项 ============================
+# TODO: 修改transactions表格 --user_id  ✅ 已完成
+# TODO: 更新Tradingdetails表  ✅ 已完成  
+# TODO: 验证StockData表更新是否正确 -- 目前写入正确，需要有较多订单验证撮合逻辑
+# TODO: 更新user_profile ⏳ 进行中
+# 
+# 调试说明：直接运行debug模式即可测试
 
-# import asyncio
+# ============================ 导入依赖库 ============================
 
-import aiofiles
-from datetime import datetime
-import aiosqlite
+# 标准库导入
+import json
+import os
+import random
+import sqlite3
+import uuid
+import warnings
 from collections import defaultdict
 from datetime import datetime, timedelta
-import random
-import uuid
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-import pandas as pd
-import json
-import sqlite3
-import warnings
+
+# 第三方库导入
+import aiofiles           # 异步文件操作
+import aiosqlite          # 异步SQLite操作
+import matplotlib.pyplot as plt  # 图表绘制
+import numpy as np        # 数值计算
+import pandas as pd       # 数据处理
+
+# 忽略pandas的FutureWarning警告
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 
 class Order:
+    """
+    交易订单类
+    
+    该类表示一个标准的股票交易订单，包含了订单撮合所需的所有基本信息。
+    支持买入和卖出两种方向，并提供时间戳调整功能以避免订单冲突。
+    
+    Attributes:
+        stock_code (str): 股票代码，如'SH600000'
+        price (float): 订单价格
+        quantity (int): 订单数量（统一使用正数）
+        timestamp (datetime): 订单时间戳
+        original_timestamp (datetime): 原始时间戳（备份）
+        user_id (str): 下单用户ID
+        direction (str): 交易方向，'buy'表示买入，'sell'表示卖出
+        
+    Methods:
+        adjust_timestamp: 调整订单时间戳以避免重复
+        __str__: 订单的字符串表示
+        __repr__: 订单的详细表示
+        
+    Note:
+        - 所有数量都使用正数表示，方向通过direction字段区分
+        - 时间戳支持微秒级精度以确保订单优先级
+        - 支持时间戳调整以处理并发订单的时间冲突
+    """
     def __init__(self, stock_code: str, price: float, quantity: int, timestamp: datetime, user_id: str, direction: str):
         self.stock_code = stock_code
         self.price = price
@@ -152,20 +186,46 @@ class Order:
         self.direction = direction  # 'buy' 或 'sell'
 
     def adjust_timestamp(self, delta_microseconds: int = 1000):
-        """调整订单时间戳"""
+        """
+        调整订单时间戳以避免重复
+        
+        当多个订单具有相同时间戳时，通过微调时间戳确保订单的唯一性和正确排序。
+        
+        Args:
+            delta_microseconds (int): 时间戳调整的微秒数，默认1000微秒
+            
+        Returns:
+            datetime: 调整后的新时间戳
+        """
         self.timestamp += timedelta(microseconds=delta_microseconds)
         return self.timestamp
 
     def __str__(self):
+        """订单的简洁字符串表示"""
         return (f"Order(price={self.price}, quantity={self.quantity}, "
                 f"time={self.timestamp.strftime('%H:%M:%S.%f')})")
 
     def __repr__(self):
+        """订单的详细字符串表示"""
         return self.__str__()
 
 
 def validate_order_timestamps(orders: list[Order]) -> bool:
-    """验证订单时间戳是否合理"""
+    """
+    验证订单时间戳的唯一性和合理性
+    
+    检查订单列表中是否存在重复的时间戳，确保订单排序的准确性。
+    
+    Args:
+        orders (list[Order]): 要验证的订单列表
+        
+    Returns:
+        bool: 如果所有时间戳都唯一则返回True，否则返回False
+        
+    Note:
+        - 重复时间戳会影响订单的优先级排序
+        - 建议在订单处理前进行验证
+    """
     timestamps = [order.timestamp for order in orders]
 
     # 检查是否有重复时间戳
@@ -182,15 +242,44 @@ def calculate_closing_price(buy_orders: list[Order],
                             current_date: str = None,
                             output_dir: str = None) -> tuple[float, int, list[dict]]:
     """
-    计算收盘价、成交量和每笔订单的成交情况
-
+    核心订单撮合算法 - 计算收盘价和成交明细
+    
+    该函数实现了完整的股票订单撮合逻辑，模拟真实交易所的撮合机制。
+    采用价格优先、时间优先的原则，寻找最大成交量的价格点作为收盘价。
+    
+    撮合规则：
+    1. 价格优先：买方出价高者优先，卖方要价低者优先
+    2. 时间优先：同价格下，先下单者优先
+    3. 最大成交量原则：选择能产生最大成交量的价格作为成交价
+    4. 涨跌停限制：成交价必须在上日收盘价±10%范围内
+    5. 时间戳去重：自动处理重复时间戳问题
+    
+    算法流程：
+    1. 订单排序和时间戳去重
+    2. 检查是否存在可撮合的订单
+    3. 构建价格-数量映射表
+    4. 遍历所有价格点寻找最大成交量
+    5. 生成详细的成交记录
+    6. 创建订单簿可视化
+    
     Args:
-        buy_orders: 买单列表
-        sell_orders: 卖单列表
-        last_price: 上一个交易日收盘价
-
+        buy_orders (list[Order]): 买入订单列表
+        sell_orders (list[Order]): 卖出订单列表
+        last_price (float): 上一交易日收盘价
+        current_date (str, optional): 当前交易日期，用于可视化
+        output_dir (str, optional): 输出目录，用于保存可视化文件
+        
     Returns:
-        tuple[float, int, list[dict]]: (成交价格, 总成交量, 订单成交记录列表)
+        tuple[float, int, list[dict]]: 包含以下元素的元组
+            - 成交价格 (float): 最终确定的收盘价
+            - 总成交量 (int): 总的股票成交数量
+            - 成交记录列表 (list[dict]): 每笔成交的详细信息
+            
+    Note:
+        - 如果没有买卖双方订单，返回上一日收盘价
+        - 如果买卖价格无法撮合，返回上一日收盘价
+        - 会自动生成订单簿可视化图表
+        - 成交记录包含完整的用户、价格、数量信息
     """
     # 如果没有订单,返回上一个交易日收盘价
     if not buy_orders or not sell_orders:
@@ -734,14 +823,35 @@ def save_daily_results(results: dict, date: str, output_dir: str = "simulation_r
 
 def create_orders_from_decisions(decisions: list[dict], current_date: str) -> list[Order]:
     """
-    将TradingAgent的决策转换为Order对象，随机分配交易时间
-
+    将用户交易决策转换为标准订单对象
+    
+    该函数将交易代理生成的抽象决策转换为具体的交易订单，
+    并为每个订单分配随机的交易时间戳，模拟真实的交易时间分布。
+    
+    处理流程：
+    1. 定义交易时间段（上午9:30-11:30，下午13:00-15:00）
+    2. 为每个有效决策生成随机时间戳
+    3. 确保时间戳的唯一性
+    4. 创建标准Order对象
+    5. 按时间戳排序返回
+    
     Args:
-        decisions: 决策列表
-        current_date: str, 当前日期 'YYYY-MM-DD'
-
+        decisions (list[dict]): 用户交易决策列表，每个决策包含：
+            - user_id: 用户ID
+            - stock_code: 股票代码
+            - direction: 交易方向（'buy'/'sell'）
+            - amount: 交易数量
+            - target_price: 目标价格
+        current_date (str): 当前交易日期，格式'YYYY-MM-DD'
+        
     Returns:
-        list[Order]: Order对象列表
+        list[Order]: 按时间戳排序的订单对象列表
+        
+    Note:
+        - 只处理有效的买卖决策（数量>0）
+        - 时间戳在交易时间段内随机分布
+        - 确保所有时间戳的唯一性
+        - 所有订单数量都使用正数表示
     """
     # 定义交易时间段
     morning_start = datetime.strptime(f"{current_date} 09:30:00", "%Y-%m-%d %H:%M:%S")
@@ -800,17 +910,37 @@ def process_trading_day(decisions: list[dict],
                         df_stock_profile_real: pd.DataFrame = None,
                         json_file_path: str = None):
     """
-    处理所有股票的每日订单
-
+    处理单个交易日的完整交易流程
+    
+    该函数是交易日处理的核心协调器，负责将用户决策转换为订单，
+    执行撮合交易，并更新所有相关的数据库表。
+    
+    完整处理流程：
+    1. 决策转换：将用户交易决策转换为标准订单格式
+    2. 时间戳验证：确保所有订单时间戳的唯一性
+    3. 订单撮合：执行多股票并行撮合处理
+    4. 结果保存：保存交易结果到CSV文件
+    5. 数据库更新：更新股票数据表
+    6. 交易明细：更新交易明细表
+    7. 用户档案：更新用户持仓和收益信息
+    
     Args:
-        decisions: 所有订单列表 [order1, order2]
-        last_prices: 字典，键为股票代码，值为上一交易日收盘价
-        current_date: 当前交易日期
-        output_dir: 输出目录
-        db_path: 数据库路径
-
+        decisions (list[dict]): 用户交易决策列表
+        last_prices (dict): 上一交易日各股票收盘价，格式{stock_code: price}
+        current_date (str): 当前交易日期，格式'YYYY-MM-DD'
+        output_dir (str): 结果输出目录，默认"simulation_results"
+        db_path (str): 数据库文件路径
+        df_stock (pd.DataFrame): 股票历史数据
+        df_stock_profile_real (pd.DataFrame): 真实股票资料数据
+        json_file_path (str): 原始决策JSON文件路径
+        
     Returns:
-        dict: 每支股票的交易结果
+        dict: 每支股票的交易结果，包含收盘价、成交量、交易明细等
+        
+    Note:
+        - 支持多股票并行处理
+        - 包含完整的数据验证和异常处理
+        - 会自动更新所有相关数据库表
     """
     # 1. 转换决策为订单，并分配随机时间戳
     orders = create_orders_from_decisions(decisions, current_date)
@@ -843,13 +973,36 @@ def update_stock_data_table(results: dict,
                             output_dir: str = 'simulation_results',
                             df_stock: pd.DataFrame = None):
     """
-    更新数据库中的 StockData 表。
-
+    更新数据库中的股票数据表（StockData）
+    
+    该函数负责将当日的交易结果更新到数据库的StockData表中，包括：
+    - 基础价格数据（收盘价、涨跌幅等）
+    - 技术指标（移动平均线、MACD等）
+    - 估值指标（市盈率、市净率等）
+    - 成交量数据和资金流向
+    
+    数据更新策略：
+    1. 使用撮合结果更新有交易的股票数据
+    2. 使用真实市场数据更新无交易的股票数据
+    3. 基于真实数据等比例调整估值指标
+    4. 计算技术指标的移动平均值
+    
     Args:
-        results (dict): 交易结果字典，包含每支股票的收盘价、成交量等信息。
-        current_date (str): 当前交易日期，格式为 'YYYY-MM-DD'。
-        db_path (str): 数据库文件路径，默认为 'sys_100.db'。
-        output_dir (str): 输出目录，默认为 'simulation_results/{current_date}'。
+        results (dict): 撮合交易结果字典，包含每支股票的收盘价、成交量等
+        current_date (str): 当前交易日期，格式为'YYYY-MM-DD'
+        db_path (str): SQLite数据库文件路径
+        real_data_path (str): 真实历史数据CSV文件路径
+        output_dir (str): 输出目录路径
+        df_stock (pd.DataFrame): 股票历史数据DataFrame
+        
+    Raises:
+        FileNotFoundError: 当必要的数据文件不存在时抛出
+        Exception: 数据库操作失败时抛出
+        
+    Note:
+        - 估值指标基于真实数据和模拟价格的比例进行调整
+        - 技术指标计算支持不足周期的情况
+        - 会自动处理有交易和无交易的股票
     """
     try:
         # 读取大单资金流数据（模拟的）
@@ -1434,19 +1587,44 @@ def read_json(json_file_path):
     return converted_decisions
 
 def test_matching_system(
-    current_date: str,  # '2023-06-15
+    current_date: str,
     json_file_path: str = None,
     db_path: str = None,
     base_path: str = '.'
 ):
     """
-    测试撮合系统
-
+    交易撮合系统主测试函数
+    
+    该函数是整个交易撮合引擎的主入口，负责协调所有子模块完成一个完整的
+    交易日处理流程。从读取用户决策到更新数据库，实现端到端的交易处理。
+    
+    主要处理流程：
+    1. 路径配置和目录创建
+    2. 数据库连接和数据加载
+    3. 用户交易决策读取和解析
+    4. 订单撮合和交易执行
+    5. 交易结果统计和保存
+    6. 数据库更新（股票数据、交易明细、用户档案）
+    7. 异常情况处理（如无交易时的节假日模式）
+    
     Args:
-        current_date (str): 交易日期，格式为 'YYYY-MM-DD'(str)
-        json_file_path (str, optional): 决策文件路径，如果为None则使用默认路径
-        db_path (str, optional): 数据库路径，如果为None则使用默认路径
-        base_path (str, optional): 项目基础路径
+        current_date (str): 当前交易日期，格式为'YYYY-MM-DD'
+        json_file_path (str, optional): 用户决策JSON文件路径，默认使用标准路径
+        db_path (str, optional): 数据库文件路径，默认使用标准路径
+        base_path (str): 项目根目录路径，默认为当前目录
+        
+    Note:
+        - 支持交易日和非交易日两种模式
+        - 包含完整的异常处理和错误日志
+        - 会自动创建必要的输出目录
+        - 支持大规模用户并发交易处理
+        
+    Example:
+        >>> test_matching_system(
+        ...     current_date='2023-06-15',
+        ...     base_path='./logs',
+        ...     db_path='./data/user.db'
+        ... )
     """
     # 设置默认路径
 

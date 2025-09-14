@@ -193,51 +193,6 @@ class TradingPrompt:
             position_details.append(position_info)
             position_easy_details.append(position_easy_info)
         
-#         investment_behavior_description = f"""
-# ## 投资行为特征：
-# - 处置效应：{ 
-#     "你像一位“见好就收”的园丁，果实刚成熟就急着采摘（盈利时倾向卖出），但对那些还未成熟的果实却总抱有期待，迟迟不愿清理（亏损时倾向持有）。" 
-#     if user_profile['bh_disposition_effect_category'] == "高" 
-#     else "你在盈利和亏损时的决策相对平衡，既不会急于卖出盈利资产，也不会过度拖延处理亏损资产。" 
-#     if user_profile['bh_disposition_effect_category'] == "中" 
-#     else "你更像一位理性的园丁，能够冷静地处理盈利和亏损，不会因为情绪而影响决策。"
-# }
-# - 彩票偏好：{ 
-#     "你对投资的态度像一位“高风险赌徒”，喜欢追逐高收益的刺激，愿意为了一夜暴富承担更大的风险。" 
-#     if user_profile['bh_lottery_preference_category'] == "高" 
-#     else "你对高风险资产有一定的兴趣，但也会考虑稳健投资，不会完全孤注一掷。" 
-#     if user_profile['bh_lottery_preference_category'] == "中" 
-#     else "你更像一位“稳健型投资者”，不喜欢冒险，更倾向于选择低风险、稳定收益的资产。"
-# }
-# - 投资集中度：{ 
-#     "你像一位“专注的农夫”，把大部分种子撒在少数几块地里，期待它们丰收。" 
-#     if user_profile['bh_underdiversification_category'] == "高" 
-#     else "你在投资时会适当分散，但也会对某些资产有较高的信心，愿意投入更多资金。" 
-#     if user_profile['bh_underdiversification_category'] == "中" 
-#     else "你像一位“分散型农夫”，把种子均匀撒在多个地块，降低风险，追求均衡收益。"
-# }
-# - 交易频率：{ 
-#        "你是一位“忙碌的蜜蜂”，频繁买卖，总在市场中寻找机会。" 
-#        if user_profile['trade_count_category'] == "高" 
-#        else "你的交易频率适中，既不会过于频繁，也不会完全放任不管。" 
-#        if user_profile['trade_count_category'] == "中" 
-#        else "你是一位“耐心的渔夫”，不常交易，更倾向于长期持有。"
-#    }
-# - 年换手率：{ 
-#        "你的资金像高速旋转的风车，流动迅速，市场参与度很高。" 
-#        if user_profile['bh_annual_turnover_category'] == "高" 
-#        else "你的资金流动速度适中，既不会过于激进，也不会过于保守。" 
-#        if user_profile['bh_annual_turnover_category'] == "中" 
-#        else "你的资金像平静的湖水，流动缓慢，更注重长期投资。"
-#    }
-# - 历史回报水平：{ 
-#     "你的投资回报像一颗“耀眼的明星”，收益亮眼，过去的成绩令人羡慕。" 
-#     if user_profile['bh_total_return_category'] == "高" 
-#     else "你的投资回报像一盏“稳定的路灯”，收益平稳，表现中规中矩。" 
-#     if user_profile['bh_total_return_category'] == "中" 
-#     else "你的投资回报像一颗“默默发光的星星”，虽然不高，但胜在稳健。"
-# }
-# """
         # 构建完整的提示词
         return {
             "role": "system",

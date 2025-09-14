@@ -1,27 +1,82 @@
-from typing import List, Dict
-import math
-from typing import List, Dict, Optional
-from datetime import datetime
-from typing import Optional
-import aiosqlite
-from typing import List, Dict, Optional, Tuple
-from datetime import timedelta, datetime
-from functools import lru_cache
-import sqlite3
-import pandas as pd
-import os
-import networkx as nx
+"""
+论坛数据库管理和社交互动模块
 
+该模块负责管理论坛系统的所有数据库操作和社交互动功能，包括帖子管理、
+用户互动、内容推荐等核心功能。是整个社交交易系统的论坛数据管理核心。
+
+核心功能：
+- 论坛数据库管理：帖子、反应、引用关系的完整数据管理
+- 社交互动处理：点赞、取消点赞、转发等用户互动行为
+- 内容推荐系统：基于社交网络和热度算法的帖子推荐
+- 评分系统：动态的帖子评分和排序机制
+- 异步操作支持：高性能的异步数据库操作
+
+技术特性：
+- 基于SQLite的高性能数据存储
+- 异步数据库操作支持（aiosqlite）
+- 复杂的评分算法（热度算法、PageRank等）
+- 缓存优化的查询性能
+- 完整的数据一致性保证
+
+数据模型：
+- posts表：帖子内容、评分、类型、时间戳
+- reactions表：用户互动行为（点赞、取消点赞、转发）
+- post_references表：帖子间的引用关系
+
+适用场景：
+- 社交交易平台
+- 投资观点分享
+- 用户互动分析
+- 内容推荐系统
+- 社交影响力分析
+"""
+
+# 标准库导入
+import math
+import os
+import sqlite3
+from datetime import datetime, timedelta
+from functools import lru_cache
+from typing import Dict, List, Optional, Tuple
+
+# 第三方库导入
+import aiosqlite
+import networkx as nx
+import pandas as pd
+
+# ============================ 全局配置 ============================
+
+# 默认论坛数据库路径
 FORUM_DB_PATH = 'data/ForumDB/syn_100.db'
+# 默认用户数据库路径  
 USER_DB_PATH = 'data/UserDB/sys_100.db'
 
 
 def init_db_forum(db_path=FORUM_DB_PATH):
     """
-    Initialize forum database by deleting the existing file (if any) and creating required tables.
-
+    初始化论坛数据库 - 创建完整的论坛数据结构
+    
+    该函数负责创建论坛系统所需的所有数据表和索引，支持完整的
+    社交互动功能。如果数据库已存在，会先删除后重新创建。
+    
+    数据表结构：
+    1. posts表：存储帖子内容、评分、类型等核心信息
+    2. reactions表：存储用户互动行为（点赞、取消点赞、转发）
+    3. post_references表：存储帖子间的引用关系
+    
+    索引优化：
+    - posts表：user_id索引（提高用户帖子查询性能）
+    - reactions表：post_id索引（提高帖子互动查询性能）
+    - post_references表：reference_id索引（提高引用关系查询性能）
+    
     Args:
-        db_path (str): Path to the SQLite database file.
+        db_path (str): SQLite数据库文件路径，默认使用全局FORUM_DB_PATH
+        
+    Note:
+        - 会删除现有数据库文件（如果存在）
+        - 自动创建必要的目录结构
+        - 包含完整的外键约束和数据完整性检查
+        - 支持帖子类型和反应类型的枚举约束
     """
     # If the database file already exists, delete it
     if os.path.exists(db_path):
@@ -271,59 +326,6 @@ def fetch_posts_score_by_date_range(
         return pd.DataFrame()
 
 
-# def update_posts_score_by_date_range(
-#     start_date: str = '2023-01-01',
-#     end_date: str = '2023-06-16',
-#     db_path: str = FORUM_DB_PATH
-# ) -> bool:
-#     """
-#     Update the score of posts based on reactions for a specific date range.
-
-#     Args:
-#         start_date: The start date of the range (format: 'YYYY-MM-DD').
-#         end_date: The end date of the range (format: 'YYYY-MM-DD').
-#         db_path: Path to the SQLite database.
-
-#     Returns:
-#         bool: True if the update was successful, False otherwise.
-#     """
-#     try:
-#         with sqlite3.connect(db_path) as conn:
-#             conn.execute("BEGIN")
-
-#             # Calculate the total score for each post based on reactions within the date range
-#             # Assign scores as follows:
-#             # - 'like' = +1
-#             # - 'unlike' = -1
-#             # - 'repost' = 0 (no impact on score)
-#             cursor = conn.execute('''
-#                 SELECT post_id,
-#                        SUM(CASE WHEN type = 'like' THEN 1
-#                                WHEN type = 'unlike' THEN -1
-#                                ELSE 0 END) as total_score
-#                 FROM reactions
-#                 WHERE DATE(created_at) BETWEEN ? AND ?
-#                 GROUP BY post_id
-#             ''', (start_date, end_date))
-
-#             # Fetch all results
-#             post_scores = cursor.fetchall()
-
-#             # Update the posts table with the calculated scores
-#             for post_id, total_score in post_scores:
-#                 conn.execute('''
-#                     UPDATE posts
-#                     SET score = ?
-#                     WHERE id = ?
-#                 ''', (total_score, post_id))
-
-#             conn.commit()
-#             return True
-
-#     except sqlite3.Error as e:
-#         print(f"Error updating posts score: {e}")
-#         conn.rollback()  # Rollback in case of error
-#         return False
 
 
 def get_user_net_likes_and_post_interactions(
@@ -411,23 +413,37 @@ def create_post_db(
     user_id: str,
     content: str,
     belief: Optional[str] = None,
-    type: Optional[str] = None,  # New parameter for post type
+    type: Optional[str] = None,
     created_at: Optional[pd.Timestamp] = None,
     db_path: str = FORUM_DB_PATH
 ) -> Optional[int]:
     """
-    Create a new post in the forum database.
-
+    在论坛数据库中创建新帖子
+    
+    该函数负责在论坛系统中创建新的帖子记录，支持多种帖子类型
+    和用户信念值的记录，是用户发布内容的核心接口。
+    
+    帖子信息包含：
+    - 基础信息：用户ID、内容、创建时间
+    - 扩展信息：用户信念值、帖子类型
+    - 系统信息：自动生成的帖子ID、初始评分
+    
     Args:
-        user_id (str): The ID of the user creating the post.
-        content (str): The content of the post.
-        belief (Optional[str]): The belief of the user (default: None).
-        type (Optional[str]): The type of the post (default: None).
-        created_at (Optional[pd.Timestamp]): Pandas Timestamp for the post. Defaults to current time if None.
-        db_path (str): Path to database. Defaults to FORUM_DB_PATH.
-
+        user_id (str): 发帖用户的ID
+        content (str): 帖子的文本内容
+        belief (Optional[str]): 用户的投资信念值，可选
+        type (Optional[str]): 帖子类型，可选
+        created_at (Optional[pd.Timestamp]): 帖子创建时间，默认当前时间
+        db_path (str): 数据库文件路径，默认使用全局FORUM_DB_PATH
+        
     Returns:
-        Optional[int]: The ID of the created post, or None if creation failed.
+        Optional[int]: 创建成功返回帖子ID，失败返回None
+        
+    Note:
+        - 帖子ID由数据库自动生成
+        - 初始评分为0，后续通过互动更新
+        - 支持时间戳的精确记录
+        - 包含完整的错误处理机制
     """
     try:
         with sqlite3.connect(db_path) as conn:
@@ -945,8 +961,45 @@ def recommend_post_graph(
     max_return: int = 3
 ) -> List[Dict]:
     """
-    Recommend posts from users who are directly connected to the target user in the graph.
-    Improved algorithm with time decay and logarithmic scaling of interactions.
+    基于社交网络图的帖子推荐算法
+    
+    该函数实现了一个基于用户社交关系的智能帖子推荐系统。
+    只推荐来自用户直接社交连接的帖子，并使用改进的热度算法进行排序。
+    
+    推荐算法特性：
+    1. 社交过滤：只推荐来自图中直接邻居用户的帖子
+    2. 时间衰减：考虑帖子发布时间对热度的影响
+    3. 对数缩放：使用对数函数处理互动数量，避免极值影响
+    4. 热度排序：基于改进的热度公式进行帖子排序
+    5. 质量筛选：自动过滤低质量和过时内容
+    
+    热度计算公式：
+    - 正向内容：log10(净点赞数 + 1) / (时间衰减因子 ^ 1.8)
+    - 负向内容：-时间衰减值（快速下沉）
+    
+    Args:
+        graph (nx.Graph): 用户社交关系网络图
+        target_user_id (str): 目标用户ID（推荐对象）
+        db_path (str): 论坛数据库文件路径
+        start_date (pd.Timestamp): 推荐内容的开始时间
+        end_date (pd.Timestamp): 推荐内容的结束时间
+        max_return (int): 最大返回帖子数量，默认3个
+        
+    Returns:
+        List[Dict]: 推荐的帖子列表，按热度降序排列，每个帖子包含：
+            - id: 帖子ID
+            - user_id: 发帖用户ID
+            - content: 帖子内容
+            - score: 当前评分
+            - belief: 用户信念值
+            - type: 帖子类型
+            - created_at: 创建时间
+            
+    Note:
+        - 只推荐来自社交网络邻居的帖子
+        - 使用改进的热度算法确保内容质量
+        - 支持时间范围的灵活配置
+        - 自动处理无邻居用户的情况
     """
     try:
         with sqlite3.connect(db_path) as conn:
