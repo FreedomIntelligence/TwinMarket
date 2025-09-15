@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TwinMarket - A Scalable Behavioral and Social Simulation for Financial Markets</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2>TwinMarket</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#overview" class="nav-link">Overview</a></li>
+                <li><a href="#framework" class="nav-link">Framework</a></li>
+                <li><a href="#results" class="nav-link">Results</a></li>
+                <li><a href="#scalability" class="nav-link">Scalability</a></li>
+                <li><a href="#citation" class="nav-link">Citation</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <!-- Award Badge -->
+                <div class="award-badge">
+                    <span class="award-icon">🏆</span>
+                    <span class="award-text">ICLR Financial AI Workshop Best Paper</span>
+                </div>
+                <h1 class="hero-title">TwinMarket</h1>
+                <h2 class="hero-subtitle">A Scalable Behavioral and Social Simulation for Financial Markets</h2>
+                <p class="hero-description">
+                    A novel multi-agent framework that leverages Large Language Models to simulate socio-economic systems,
+                    modeling individual investor behaviors, social interactions, and emergent market phenomena
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-icon">🤖</div>
+                        <div class="stat-number">1000+</div>
+                        <div class="stat-label">LLM Agents</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-number">50</div>
+                        <div class="stat-label">SSE Stocks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">Stylized Facts</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">🧠</div>
+                        <div class="stat-highlight">BDI</div>
+                        <div class="stat-label">Framework</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-highlight">Real</div>
+                        <div class="stat-label">User Data</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-highlight">Scalable</div>
+                        <div class="stat-label">Architecture</div>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <a href="https://arxiv.org/abs/2502.01506" class="btn btn-primary" target="_blank">
+                        <span class="btn-icon">📄</span> Read Paper
+                    </a>
+                    <a href="https://github.com/TobyYang7/TwinMarket" class="btn btn-github" target="_blank">
+                        <svg class="github-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        View Code
+                    </a>
+                    <a href="#citation" class="btn btn-secondary">
+                        <span class="btn-icon">📝</span> Cite This Work
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Overview Section with Image -->
+    <section id="overview" class="overview">
+        <div class="container">
+            <h2 class="section-title">Overview</h2>
+            <div class="overview-image">
+                <img src="src/TwinMarket.jpg" alt="TwinMarket Overview" style="width: 100%; max-width: 1000px; margin: 0 auto; display: block;">
+            </div>
+            <div class="overview-content">
+                <div class="overview-highlights">
+                    <div class="highlight-box">
+                        <span class="highlight-icon">🎯</span>
+                        <h4>Core Problem</h4>
+                        <p>Traditional ABMs struggle to capture the diversity of human behavior, particularly irrational factors in behavioral economics</p>
+                    </div>
+                    <div class="highlight-box">
+                        <span class="highlight-icon">⚡</span>
+                        <h4>Our Solution</h4>
+                        <p>LLM agents that account for cognitive biases, emotional fluctuations, and non-rational influences in market simulations</p>
+                    </div>
+                </div>
+                <p class="lead-text">
+                    <span class="text-icon">💡</span> <strong>TwinMarket</strong> examines how individual behaviors, through interactions and feedback mechanisms,
+                    give rise to collective dynamics and emergent phenomena in financial markets. Unlike traditional rule-based ABMs,
+                    our LLM-based approach captures the full spectrum of human behavior complexity.
+                </p>
+                <p class="lead-text">
+                    <span class="text-icon">🎯</span> Through experiments in a simulated stock market, we demonstrate how individual actions trigger
+                    group behaviors, leading to emergent outcomes such as <span class="keyword-highlight">financial bubbles</span>,
+                    <span class="keyword-highlight">market recessions</span>, and other collective socio-economic patterns that arise from
+                    the complex interplay between individual decision-making and market dynamics.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features -->
+    <section id="features" class="innovations">
+        <div class="container">
+            <h2 class="section-title">Key Features</h2>
+            <div class="innovation-grid">
+                <div class="innovation-card">
+                    <div class="innovation-icon">🎯</div>
+                    <h3>Real-World Alignment</h3>
+                    <p>Grounded in established behavioral theories and calibrated with real-world data,
+                       ensuring realistic human behavior modeling</p>
+                </div>
+                <div class="innovation-card">
+                    <div class="innovation-icon">🔄</div>
+                    <h3>Dynamic Interaction Modeling</h3>
+                    <p>Captures diverse human behaviors and their interactions, particularly in the context
+                       of information propagation and social influence</p>
+                </div>
+                <div class="innovation-card">
+                    <div class="innovation-icon">📈</div>
+                    <h3>Scalable Market Simulations</h3>
+                    <p>Supports large-scale simulations, allowing researchers to analyze the impact of group
+                       size and interaction complexity on market behavior</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Framework Components -->
+    <section id="framework" class="architecture">
+        <div class="container">
+            <h2 class="section-title">Framework Components</h2>
+
+            <div class="framework-section">
+                <h3><span class="section-icon">👤</span> Micro-Level Simulation: Individual Behaviors</h3>
+                <div class="framework-grid">
+                    <div class="framework-card">
+                        <div class="card-header">
+                            <span class="card-icon">🧠</span>
+                            <h4>BDI Framework</h4>
+                        </div>
+                        <ul class="feature-list">
+                            <li><span class="list-icon">💡</span> <strong>Belief:</strong> Agent's understanding of the market</li>
+                            <li><span class="list-icon">🎯</span> <strong>Desire:</strong> Agent's objectives or preferences</li>
+                            <li><span class="list-icon">⚡</span> <strong>Intention:</strong> Concrete actions the agent executes</li>
+                        </ul>
+                    </div>
+                    <div class="framework-card">
+                        <div class="card-header">
+                            <span class="card-icon">📊</span>
+                            <h4>Behavioral Biases</h4>
+                        </div>
+                        <div class="bias-tags">
+                            <span class="bias-tag">💪 Overconfidence</span>
+                            <span class="bias-tag">📉 Loss Aversion</span>
+                            <span class="bias-tag">🐑 Herding</span>
+                            <span class="bias-tag">🎲 Risk Preferences</span>
+                        </div>
+                        <p>Influencing trading decisions and contributing to market heterogeneity</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="framework-section">
+                <h3><span class="section-icon">🌐</span> Macro-Level Simulation: Social Interactions</h3>
+                <div class="framework-grid">
+                    <div class="framework-card">
+                        <div class="card-header">
+                            <span class="card-icon">🌐</span>
+                            <h4>Social Network Construction</h4>
+                        </div>
+                        <ul class="feature-list">
+                            <li><span class="list-icon">🔗</span> <strong>Dynamic Connections:</strong> Network evolves based on trading patterns</li>
+                            <li><span class="list-icon">📋</span> <strong>Behavior Similarity:</strong> Agents connect through similar strategies</li>
+                            <li><span class="list-icon">⏱️</span> <strong>Time Decay:</strong> Recent interactions weighted more heavily</li>
+                        </ul>
+                    </div>
+                    <div class="framework-card">
+                        <div class="card-header">
+                            <span class="card-icon">📡</span>
+                            <h4>Information Propagation</h4>
+                        </div>
+                        <ul class="feature-list">
+                            <li><span class="list-icon">📦</span> <strong>Information Aggregation:</strong> Collecting data from social connections</li>
+                            <li><span class="list-icon">👑</span> <strong>Opinion Leaders:</strong> Influential agents shape market sentiment</li>
+                            <li><span class="list-icon">🔄</span> <strong>Echo Chambers:</strong> Formation of polarized belief groups</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="framework-section">
+                <h3>Data Sources</h3>
+                <div class="data-image">
+                    <img src="src/data.png" alt="Data Sources" style="width: 100%; max-width: 800px; margin: 2rem auto; display: block;">
+                </div>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <span class="data-icon">👤</span>
+                        <h4>Real User Profiles</h4>
+                        <p>From Xueqiu social media platform</p>
+                        <div class="data-stat">100K+ users</div>
+                    </div>
+                    <div class="data-card">
+                        <span class="data-icon">💱</span>
+                        <h4>Transaction Details</h4>
+                        <p>Historical trading data from Xueqiu</p>
+                        <div class="data-stat">1M+ trades</div>
+                    </div>
+                    <div class="data-card">
+                        <span class="data-icon">📈</span>
+                        <h4>Stock Data</h4>
+                        <p>SSE 50 index from CSMAR database</p>
+                        <div class="data-stat">50 stocks</div>
+                    </div>
+                    <div class="data-card">
+                        <span class="data-icon">📰</span>
+                        <h4>News & Announcements</h4>
+                        <p>From Sina Finance, 10jqka, and CNINFO</p>
+                        <div class="data-stat">Daily updates</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experimental Results -->
+    <section id="results" class="results">
+        <div class="container">
+            <h2 class="section-title">Experimental Results</h2>
+
+            <!-- Information Propagation -->
+            <div class="results-section">
+                <h3>Information Propagation</h3>
+                <div class="propagation-visualizations">
+                    <div class="viz-container">
+                        <h4>Opinion Leader Emergence</h4>
+                        <canvas id="opinionLeaderCanvas" width="400" height="300"></canvas>
+                        <p class="viz-description">Influential nodes emerge and shape network opinions through cascading influence</p>
+                    </div>
+                    <div class="viz-container">
+                        <h4>Information Polarization</h4>
+                        <canvas id="polarizationCanvas" width="400" height="300"></canvas>
+                        <p class="viz-description">Information spreads differently across groups, creating echo chambers and polarized beliefs</p>
+                    </div>
+                </div>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h4>Opinion Leaders</h4>
+                        <p>Simulations reveal the emergence of opinion leaders who exert significant influence on the network,
+                           shaping market sentiment and trading behaviors</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Information Polarization</h4>
+                        <p>Different information signals lead to the formation of distinct groups with divergent beliefs,
+                           creating self-reinforcing feedback loops</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Behavioral Polarization -->
+            <div class="results-section">
+                <h3>Behavioral Polarization Under Rumors</h3>
+                <div class="results-image">
+                    <img src="src/vis2.png" alt="Behavioral Polarization" style="width: 100%; max-width: 900px; margin: 0 auto; display: block;">
+                </div>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h4>Belief Divergence</h4>
+                        <p>Rumors lead to a divergence in user beliefs and the formation of distinct echo chambers</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Trading Volatility</h4>
+                        <p>Rumors make users more likely to sell, leading to significant increase in sell/buy ratio</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Market Turbulence</h4>
+                        <p>Rumors cause the market to suffer sharp declines</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Dynamics -->
+            <div class="results-section">
+                <h3>Market Dynamics - Stylized Facts</h3>
+                <div class="results-image">
+                    <img src="src/vis4.png" alt="Market Dynamics" style="width: 100%; max-width: 1100px; margin: 2rem auto; display: block;">
+                </div>
+                <div class="stylized-facts-grid">
+                    <div class="fact-card">
+                        <span class="fact-icon">📊</span>
+                        <h4>Fat-tailed Returns</h4>
+                        <p>Extreme price movements occur more frequently than normal distribution</p>
+                    </div>
+                    <div class="fact-card">
+                        <span class="fact-icon">📈</span>
+                        <h4>Volatility Clustering</h4>
+                        <p>High volatility periods are followed by high volatility periods</p>
+                    </div>
+                    <div class="fact-card">
+                        <span class="fact-icon">⚖️</span>
+                        <h4>Leverage Effect</h4>
+                        <p>Negative returns correlate with increased future volatility</p>
+                    </div>
+                    <div class="fact-card">
+                        <span class="fact-icon">💹</span>
+                        <h4>Volume-Return Relationship</h4>
+                        <p>Trading volume positively correlates with price changes</p>
+                    </div>
+                </div>
+                <div class="emergent-behaviors">
+                    <p><strong>Emergent Group Behaviors:</strong> The framework reveals self-fulfilling prophecies where collective
+                    expectations drive market trends, and information cascades where traders rely on perceived consensus rather
+                    than fundamental analysis.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scalability -->
+    <section id="scalability" class="scalability">
+        <div class="container">
+            <h2 class="section-title">Scalability</h2>
+            <div class="scalability-content">
+                <div class="scalability-image">
+                    <img src="src/price_index_plot.png" alt="Scalability Analysis" style="width: 100%; max-width: 900px; margin: 0 auto; display: block;">
+                </div>
+                <p class="scalability-description">
+                    TwinMarket is designed to scale to large populations, with simulations involving up to <strong>1,000 agents</strong>.
+                    The framework maintains realistic market dynamics even at larger scales, providing a robust platform for
+                    studying complex socio-economic systems.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Citation -->
+    <section id="citation" class="citation">
+        <div class="container">
+            <h2 class="section-title">How to Cite</h2>
+            <p>If you use TwinMarket in your research, please cite the following paper:</p>
+            <div class="citation-box">
+                <pre><code>@misc{yang2025twinmarketscalablebehavioralsocialsimulation,
+      title={TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets},
+      author={Yuzhe Yang and Yifei Zhang and Minghao Wu and Kaidi Zhang and
+              Yunmiao Zhang and Honghai Yu and Yan Hu and Benyou Wang},
+      year={2025},
+      eprint={2502.01506},
+      archivePrefix={arXiv},
+      primaryClass={cs.CE},
+      url={https://arxiv.org/abs/2502.01506},
+}</code></pre>
+            </div>
+            <div class="citation-buttons">
+                <button onclick="copyToClipboard()" class="btn btn-primary">Copy BibTeX</button>
+                <a href="https://arxiv.org/abs/2502.01506" class="btn btn-secondary" target="_blank">View on arXiv</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 TwinMarket Project. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyToClipboard() {
+            const codeBlock = document.querySelector('.citation-box code');
+            const textArea = document.createElement('textarea');
+            textArea.value = codeBlock.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            // Show feedback
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }
+    </script>
+    <script src="js/main.js"></script>
+</body>
+</html>

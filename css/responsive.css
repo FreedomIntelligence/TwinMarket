@@ -1,0 +1,366 @@
+/* 响应式设计 */
+
+/* 平板设备 (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+    .container {
+        max-width: 95%;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.3rem;
+    }
+
+    .architecture-content {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .demo-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 400px;
+        grid-template-rows: auto;
+    }
+}
+
+/* 小平板和大手机 (480px - 768px) */
+@media screen and (max-width: 768px) {
+    /* 导航栏响应式 */
+    .nav-menu {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 60px;
+        flex-direction: column;
+        width: 100%;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 1rem 0;
+    }
+
+    .nav-menu.active {
+        display: flex;
+    }
+
+    .nav-menu li {
+        margin: 0;
+        text-align: center;
+    }
+
+    .nav-link {
+        display: block;
+        padding: 1rem;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+
+    .hamburger.active span:nth-child(1) {
+        transform: rotate(-45deg) translate(-5px, 6px);
+    }
+
+    .hamburger.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .hamburger.active span:nth-child(3) {
+        transform: rotate(45deg) translate(-5px, -6px);
+    }
+
+    /* Hero响应式 */
+    .hero {
+        padding: 80px 0 60px;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .hero-description {
+        font-size: 1rem;
+        padding: 0 20px;
+    }
+
+    .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 200px;
+        text-align: center;
+    }
+
+    /* Section响应式 */
+    section {
+        padding: 60px 0;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    /* 创新卡片响应式 */
+    .innovation-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    /* 定律网格响应式 */
+    .laws-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    /* 决策流程响应式 */
+    .decision-flow {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .flow-arrow {
+        transform: rotate(90deg);
+    }
+
+    /* 资源网格响应式 */
+    .resources-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 技术栈响应式 */
+    .tech-logos {
+        gap: 2rem;
+    }
+
+    .tech-item img,
+    .tech-item svg {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* 手机设备 (< 480px) */
+@media screen and (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    /* Hero手机响应式 */
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .hero-description {
+        font-size: 0.9rem;
+    }
+
+    .hero-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        grid-template-rows: auto;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    /* Section标题 */
+    .section-title {
+        font-size: 1.75rem;
+        margin-bottom: 2rem;
+    }
+
+    /* 创新卡片 */
+    .innovation-card {
+        padding: 1.5rem;
+    }
+
+    .innovation-icon {
+        font-size: 2.5rem;
+    }
+
+    .innovation-card h3 {
+        font-size: 1.1rem;
+    }
+
+    /* 架构层 */
+    .arch-layer {
+        padding: 1rem;
+    }
+
+    .arch-layer h4 {
+        font-size: 1rem;
+    }
+
+    /* 组件列表 */
+    .component-list li {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    /* 定律卡片 */
+    .laws-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .law-card {
+        padding: 1rem;
+    }
+
+    /* Demo卡片 */
+    .demo-grid {
+        gap: 1.5rem;
+    }
+
+    .demo-card {
+        padding: 1.5rem;
+    }
+
+    /* 资源卡片 */
+    .resources-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .resource-card {
+        padding: 1.5rem;
+    }
+
+    /* 技术栈 */
+    .tech-logos {
+        gap: 1.5rem;
+    }
+
+    .tech-item span {
+        font-size: 0.8rem;
+    }
+
+    /* Footer */
+    .footer {
+        padding: 1.5rem 0;
+    }
+
+    .footer p {
+        font-size: 0.9rem;
+    }
+}
+
+/* 超小屏幕设备 (< 360px) */
+@media screen and (max-width: 360px) {
+    .hero-title {
+        font-size: 1.75rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* 横屏模式优化 */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+    .hero {
+        padding: 60px 0 40px;
+    }
+
+    section {
+        padding: 40px 0;
+    }
+
+    .hero-stats {
+        display: none;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar,
+    .hero-buttons,
+    .hamburger,
+    .footer {
+        display: none;
+    }
+
+    .hero {
+        background: white;
+        color: var(--text-primary);
+        margin-top: 0;
+        padding: 20px 0;
+    }
+
+    .hero-title,
+    .hero-subtitle {
+        color: var(--text-primary);
+    }
+
+    section {
+        padding: 20px 0;
+        page-break-inside: avoid;
+    }
+
+    .innovation-card,
+    .law-card,
+    .demo-card,
+    .resource-card {
+        box-shadow: none;
+        border: 1px solid var(--border-color);
+    }
+}
+
+/* 高分辨率屏幕优化 */
+@media screen and (min-width: 1440px) {
+    .container {
+        max-width: 1400px;
+    }
+
+    .hero-title {
+        font-size: 5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.75rem;
+    }
+
+    .section-title {
+        font-size: 3rem;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .nav-link,
+    .btn,
+    .innovation-card,
+    .law-card,
+    .resource-card {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+}
