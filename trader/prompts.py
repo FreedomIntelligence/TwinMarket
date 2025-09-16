@@ -42,8 +42,19 @@ SCHEMA2 = """# 可查询的指标说明：
 - dv_ttm: 股息率(TTM)，每股分红/股价。反映投资回报，适合评估价值型公司"""
 
 MAPPING = {
-    '基本面': ['pe_ttm', 'pb', 'ps_ttm', 'dv_ttm'],
-    '技术面': ['vol_5', 'vol_10', 'vol_30', 'ma_hfq_5', 'ma_hfq_10', 'ma_hfq_30', 'macd_dif_hfq', 'macd_dea_hfq', 'macd_hfq', 'elg_amount_net'],
+    "基本面": ["pe_ttm", "pb", "ps_ttm", "dv_ttm"],
+    "技术面": [
+        "vol_5",
+        "vol_10",
+        "vol_30",
+        "ma_hfq_5",
+        "ma_hfq_10",
+        "ma_hfq_30",
+        "macd_dif_hfq",
+        "macd_dea_hfq",
+        "macd_hfq",
+        "elg_amount_net",
+    ],
 }
 
 
@@ -56,20 +67,14 @@ def format_date(date: pd.Timestamp) -> str:
     Returns:
         str: 格式化后的日期字符串，如：'2023年6月15日 星期四'
     """
-    weekday_map = {
-        0: '一',
-        1: '二',
-        2: '三',
-        3: '四',
-        4: '五',
-        5: '六',
-        6: '日'
-    }
+    weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
     weekday = weekday_map[date.weekday()]
     return f"{date.strftime('%Y年%m月%d日')} 星期{weekday}"
 
 
-def generate_example_template(stocks_to_deal: list, price_info: dict, position_info: dict) -> str:
+def generate_example_template(
+    stocks_to_deal: list, price_info: dict, position_info: dict
+) -> str:
     """
     根据现有股票信息生成示例模板。
 
@@ -84,10 +89,10 @@ def generate_example_template(stocks_to_deal: list, price_info: dict, position_i
     template_parts = []
 
     for stock_id in stocks_to_deal:
-        current_position = position_info[stock_id]['current_position']
-        action = '请插入你的交易动作(hold/buy/sell)'
-        target_position = '请插入你的目标仓位(0-100)'
-        target_price = '请插入你的目标价格(0-100)'
+        current_position = position_info[stock_id]["current_position"]
+        action = "请插入你的交易动作(hold/buy/sell)"
+        target_position = "请插入你的目标仓位(0-100)"
+        target_price = "请插入你的目标价格(0-100)"
         template = f"""  ## {stock_id}:
       - 交易动作: {action}
       - 当前仓位: {current_position:.2f}
@@ -101,23 +106,29 @@ def generate_example_template(stocks_to_deal: list, price_info: dict, position_i
 
 class TradingPrompt:
     @staticmethod
-    def get_system_prompt(user_profile: dict, user_strategy: str,stock_profile_dict:dict) -> dict:
+    def get_system_prompt(
+        user_profile: dict, user_strategy: str, stock_profile_dict: dict
+    ) -> dict:
         """生成系统提示词。
 
         Args:
             user_profile (dict): 用户配置信息
             stock_profile_dict (dict): 股票指数信息
-        Returns:    
+        Returns:
             dict: 包含角色和内容的系统提示词字典
         """
         # 构建持仓信息
         position_details = []
-        for code, value in user_profile['cur_positions'].items():
-            market_value = user_profile["stock_returns"][code]["market_value"]  # 持仓市值
-            total_profit_rate = user_profile["stock_returns"][code]['profit']  # 百分比持仓盈亏
+        for code, value in user_profile["cur_positions"].items():
+            market_value = user_profile["stock_returns"][code][
+                "market_value"
+            ]  # 持仓市值
+            total_profit_rate = user_profile["stock_returns"][code][
+                "profit"
+            ]  # 百分比持仓盈亏
             yest_return_rate = user_profile["yest_returns"][code]  # 昨日涨跌幅
-            shares = value['shares']  # 持仓股数
-            ratio = value['ratio']  # 持仓占比
+            shares = value["shares"]  # 持仓股数
+            ratio = value["ratio"]  # 持仓占比
 
             position_info = (
                 f"- 持仓 {code}：{shares:,}股，持仓占比为{ratio}%, {stock_profile_dict[code]}"
@@ -155,29 +166,38 @@ class TradingPrompt:
 ## 重点关注行业：{', '.join(user_profile['fol_ind'])}
 
 ## 当前持仓情况：
-{chr(10).join(position_details)}"""
+{chr(10).join(position_details)}""",
         }
 
     @staticmethod
-    def get_system_prompt_new(user_profile: dict, user_strategy: str,stock_profile_dict:dict,stock_codes:list) -> dict:
+    def get_system_prompt_new(
+        user_profile: dict,
+        user_strategy: str,
+        stock_profile_dict: dict,
+        stock_codes: list,
+    ) -> dict:
         """生成系统提示词。
 
         Args:
             user_profile (dict): 用户配置信息
             stock_profile_dict (dict): 股票指数信息
             stock_codes (list): 持仓指数代码列表
-        Returns:    
+        Returns:
             dict: 包含角色和内容的系统提示词字典
         """
         # 构建持仓信息
         position_details = []
-        position_easy_details=[]
-        for code, value in user_profile['cur_positions'].items():
-            market_value = user_profile["stock_returns"][code]["market_value"]  # 持仓市值
-            total_profit_rate = user_profile["stock_returns"][code]['profit']  # 百分比持仓盈亏
+        position_easy_details = []
+        for code, value in user_profile["cur_positions"].items():
+            market_value = user_profile["stock_returns"][code][
+                "market_value"
+            ]  # 持仓市值
+            total_profit_rate = user_profile["stock_returns"][code][
+                "profit"
+            ]  # 百分比持仓盈亏
             yest_return_rate = user_profile["yest_returns"][code]  # 昨日涨跌幅
-            shares = value['shares']  # 持仓股数
-            ratio = value['ratio']  # 持仓占比
+            shares = value["shares"]  # 持仓股数
+            ratio = value["ratio"]  # 持仓占比
 
             position_info = (
                 f"- 持仓 {code}：{shares:,}股，持仓占比为{ratio}%, {stock_profile_dict[code]}"
@@ -187,12 +207,10 @@ class TradingPrompt:
                 f"它总共让你{'赚了' if total_profit_rate >= 0 else '亏了'}"
                 f"{abs(total_profit_rate)}%"
             )
-            position_easy_info=(
-                f"- 持仓 {code}：{stock_profile_dict[code]}"
-            )
+            position_easy_info = f"- 持仓 {code}：{stock_profile_dict[code]}"
             position_details.append(position_info)
             position_easy_details.append(position_easy_info)
-        
+
         # 构建完整的提示词
         return {
             "role": "system",
@@ -207,19 +225,30 @@ class TradingPrompt:
 ## 当前账户配置：
 - 重点关注行业：{', '.join(user_profile['fol_ind'])}
 - 持仓概述(简要版）：{chr(10).join(position_easy_details)}
-"""
+""",
         }
-    
+
     @staticmethod
-    def get_user_first_prompt(user_profile: dict, user_strategy: str,stock_profile_dict:dict,cur_date:pd.Timestamp,is_trading_day:bool,belief:str) -> dict:
+    def get_user_first_prompt(
+        user_profile: dict,
+        user_strategy: str,
+        stock_profile_dict: dict,
+        cur_date: pd.Timestamp,
+        is_trading_day: bool,
+        belief: str,
+    ) -> dict:
 
         position_details = []
-        for code, value in user_profile['cur_positions'].items():
-            market_value = user_profile["stock_returns"][code]["market_value"]  # 持仓市值
-            total_profit_rate = user_profile["stock_returns"][code]['profit']  # 百分比持仓盈亏
+        for code, value in user_profile["cur_positions"].items():
+            market_value = user_profile["stock_returns"][code][
+                "market_value"
+            ]  # 持仓市值
+            total_profit_rate = user_profile["stock_returns"][code][
+                "profit"
+            ]  # 百分比持仓盈亏
             yest_return_rate = user_profile["yest_returns"][code]  # 昨日涨跌幅
-            shares = value['shares']  # 持仓股数
-            ratio = value['ratio']  # 持仓占比
+            shares = value["shares"]  # 持仓股数
+            ratio = value["ratio"]  # 持仓占比
 
             position_info = (
                 f"- 持仓 {code}：{shares:,}股，持仓占比为{ratio}%, {stock_profile_dict[code]}"
@@ -230,7 +259,7 @@ class TradingPrompt:
                 f"{abs(total_profit_rate)}%"
             )
             position_details.append(position_info)
-        
+
         return {
             "role": "user",
             "content": f"""我将给你提供一些额外的辅助信息，在后续的对话中，请参考这些信息，根据你所赋予的角色人设，进行思考和决策。
@@ -246,17 +275,27 @@ class TradingPrompt:
 
 ## 持仓明细：
 {chr(10).join(position_details)}
-"""}
-    
+""",
+        }
+
     # 在 get_user_first_prompt 方法后添加固定回复逻辑
     @staticmethod
-    def get_agent_first_response(user_profile: dict, user_strategy: str,stock_profile_dict:dict,cur_date:pd.Timestamp,is_trading_day:bool,belief:str) -> dict:
+    def get_agent_first_response(
+        user_profile: dict,
+        user_strategy: str,
+        stock_profile_dict: dict,
+        cur_date: pd.Timestamp,
+        is_trading_day: bool,
+        belief: str,
+    ) -> dict:
         """生成强制固定的初始Agent响应"""
         return {
             "role": "assistant",
             "content": f"""好的，我明白了，感谢您提供这么详细的数据。现在是{format_date(cur_date)}，{'正好是交易时间' if is_trading_day else '今天不是交易日'}，账户情况我都清楚了，总资产{user_profile['total_value'] / 10000:,.2f}万，目前可用现金{user_profile['current_cash'] / 10000:,.2f}万，收益率为{user_profile['return_rate']}%。 持仓{', '.join([f"{code}({stock_profile_dict[code]})" for code in user_profile['cur_positions'].keys()])}这些指数，我都记下了，昨天涨跌幅和盈亏情况也看到了。
-            """}
-            # 我昨天的想法也回顾了。在接下来的对话中，我会严格根据以上特征和整体情况来进行对话和决策。
+            """,
+        }
+        # 我昨天的想法也回顾了。在接下来的对话中，我会严格根据以上特征和整体情况来进行对话和决策。
+
     @staticmethod
     def get_news_analysis_prompt(news_list: list) -> str:
         """
@@ -269,7 +308,11 @@ class TradingPrompt:
             str: 格式化的提示语
         """
         # 格式化新闻列表
-        formatted_news = "\n".join([f"- {news}" for news in news_list]) if news_list else "无最新相关新闻"
+        formatted_news = (
+            "\n".join([f"- {news}" for news in news_list])
+            if news_list
+            else "无最新相关新闻"
+        )
 
         prompt = f"""我将给你提供经过筛选的、时效性高、重要性高的新闻，这些新闻属于**公开新闻**，请根据这些新闻，结合你的人设和投资风格，简明扼要的谈谈你的初步想法。
 
@@ -283,12 +326,13 @@ class TradingPrompt:
     @staticmethod
     def get_stock_summary(stock_code: str, stock_data: pd.Series) -> str:
         """生成股票行情摘要。"""
+
         def format_value(value, is_integer=False, precision=2):
             if pd.isna(value):
-                return '<无法获得>'
+                return "<无法获得>"
             if is_integer:
-                return f"{int(value)}" if not pd.isna(value) else '<无法获得>'
-            return f"{value:.{precision}f}" if not pd.isna(value) else '<无法获得>'
+                return f"{int(value)}" if not pd.isna(value) else "<无法获得>"
+            return f"{value:.{precision}f}" if not pd.isna(value) else "<无法获得>"
 
         return f"""
     ## 指数代码：{stock_code} 上一个交易日{format_date(stock_data['date'])}的行情：
@@ -317,7 +361,9 @@ class TradingPrompt:
 }}"""
 
     @staticmethod
-    def get_query_for_na_prompt(user_type: str, stock_details: str, current_date: str) -> str:
+    def get_query_for_na_prompt(
+        user_type: str, stock_details: str, current_date: str
+    ) -> str:
         """生成查询新闻和公告的提示词。
 
         Args:
@@ -340,7 +386,9 @@ class TradingPrompt:
 """
 
     @staticmethod
-    def get_query_for_na_prompt2(user_type: str, stock_details: str, current_date: str) -> str:
+    def get_query_for_na_prompt2(
+        user_type: str, stock_details: str, current_date: str
+    ) -> str:
         """生成查询新闻和公告的提示词。
 
         Args:
@@ -377,7 +425,7 @@ class TradingPrompt:
     ```"""
 
     @staticmethod
-    def get_update_belief_prompt(old_belief:str) -> str:
+    def get_update_belief_prompt(old_belief: str) -> str:
         """生成更新信念的提示词。
 
         Returns:
@@ -395,7 +443,12 @@ class TradingPrompt:
     ```"""
 
     @staticmethod
-    def get_stock_selection_prompt(current_stock_details: str, potential_stock_details: str, belief: str = None,fol_ind:list=None) -> str:
+    def get_stock_selection_prompt(
+        current_stock_details: str,
+        potential_stock_details: str,
+        belief: str = None,
+        fol_ind: list = None,
+    ) -> str:
         """生成选股提示词。
 
         Args:
@@ -431,9 +484,17 @@ reason:
 ```"""
 
     @staticmethod
-    def get_initial_prompt(formatted_date: str, stocks_to_deal: list, stock_summary: str,
-                           positions_info: str, return_rate: float, total_value: float,
-                           current_cash: float, system_prompt: str, user_strategy: str) -> str:
+    def get_initial_prompt(
+        formatted_date: str,
+        stocks_to_deal: list,
+        stock_summary: str,
+        positions_info: str,
+        return_rate: float,
+        total_value: float,
+        current_cash: float,
+        system_prompt: str,
+        user_strategy: str,
+    ) -> str:
         """生成初始提示文本，包含多支股票的前一交易日行情和持仓信息。
 
         Args:
@@ -478,10 +539,19 @@ start_date: '%Y-%m-%d'  # 开始查询的时间
 end_date: '%Y-%m-%d'    # 结束查询的时间
 reason:
         ```"""
+
     @staticmethod
-    def get_initial_prompt_fake(formatted_date: str, stocks_to_deal: list, stock_summary: str,
-                           positions_info: str, return_rate: float, total_value: float,
-                           current_cash: float, system_prompt: str, user_strategy: str) -> str:
+    def get_initial_prompt_fake(
+        formatted_date: str,
+        stocks_to_deal: list,
+        stock_summary: str,
+        positions_info: str,
+        return_rate: float,
+        total_value: float,
+        current_cash: float,
+        system_prompt: str,
+        user_strategy: str,
+    ) -> str:
         """生成初始提示文本，包含多支股票的前一交易日行情和持仓信息。
 
         Args:
@@ -556,8 +626,6 @@ reason:
     请以自然语言的形式输出分析结果，确保逻辑清晰、结构完整。
     """
 
-
-
     @staticmethod
     def get_decision_prompt(
         stocks_to_deal: list,
@@ -579,20 +647,27 @@ reason:
         # 生成每只股票的信息
         stock_info = []
         for stock_id in stocks_to_deal:
-            stock_info.append(f"""
+            stock_info.append(
+                f"""
     ### {stock_id}：
     - 昨日收盘价：{price_info[stock_id]['pre_close']:.2f}元
     - 今日涨停价格：{price_info[stock_id]['limit_up']:.2f}元
     - 今日跌停价格：{price_info[stock_id]['limit_down']:.2f}元
     - 当前仓位：{position_info[stock_id]['current_position']:.2f}%
-    """)
+    """
+            )
 
         # 生成 YAML 模板
-        yaml_template = chr(10).join([f"""
+        yaml_template = chr(10).join(
+            [
+                f"""
 {stock_id}:
     action: (buy/sell/hold)
     trading_position: (float)
-    target_price: (float)""" for stock_id in stocks_to_deal])
+    target_price: (float)"""
+                for stock_id in stocks_to_deal
+            ]
+        )
 
         # 生成统一的决策提示词
         prompt = f"""现在是做出最终交易决策的时候。请基于之前的分析，结合你的投资风格和人设，对以下行业指数做出具体的交易决策。
@@ -633,7 +708,6 @@ reason:
 
         return prompt, yaml_template
 
-
     @staticmethod
     def json_to_prompt(analysis_data: dict) -> str:
         """
@@ -662,7 +736,9 @@ reason:
         return prompt.strip()
 
     @staticmethod
-    def decision_json_to_prompt(decision_data: dict, recommendation_stocks: list) -> str:
+    def decision_json_to_prompt(
+        decision_data: dict, recommendation_stocks: list
+    ) -> str:
         """
         将交易决策的 JSON 数据解析为格式化的提示词。
 
@@ -702,7 +778,7 @@ reason:
         return prompt.strip()
 
     @staticmethod
-    def get_intention_prompt(old_belief:str):
+    def get_intention_prompt(old_belief: str):
         post_prompt = f"""
         你现在正在浏览社交媒体，根据你之前获取的新闻或公告信息，结合你的投资决策行为意图，发布一条帖子。以下是具体要求：
 

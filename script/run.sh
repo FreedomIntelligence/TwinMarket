@@ -29,25 +29,7 @@ else
     echo "✅ 用户数据库已存在: $user_db_path"
 fi
 
-# 检查论坛数据库
-if [[ ! -f "$forum_db_path" || $(stat -f%z "$forum_db_path" 2>/dev/null || stat -c%s "$forum_db_path" 2>/dev/null) -eq 0 ]]; then
-    echo "论坛数据库不存在或为空，立即初始化..."
-    rm -f "$forum_db_path"  # 删除空文件
-    python3 -c "
-from util.ForumDB import init_db_forum
-print('正在初始化Forum数据库...')
-init_db_forum(db_path='$forum_db_path')
-print('✅ Forum数据库初始化完成!')
-"
-    if [[ $? -eq 0 ]]; then
-        echo "✅ 论坛数据库初始化成功: $forum_db_path"
-    else
-        echo "❌ 论坛数据库初始化失败"
-        exit 1
-    fi
-else
-    echo "✅ 论坛数据库已存在: $forum_db_path"
-fi
+# 论坛数据库初始化交由 simulation.py 在非 checkpoint 模式下处理
 
 echo "===================="
 

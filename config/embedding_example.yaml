@@ -1,0 +1,4 @@
+api_key:
+  - sk-xxxxx
+model_name: Qwen/Qwen3-Embedding-0.6B
+base_url: https://api.siliconflow.cn/v1

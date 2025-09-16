@@ -47,31 +47,31 @@ import pandas as pd
 # ============================ 全局配置 ============================
 
 # 默认论坛数据库路径
-FORUM_DB_PATH = 'data/ForumDB/syn_100.db'
-# 默认用户数据库路径  
-USER_DB_PATH = 'data/UserDB/sys_100.db'
+FORUM_DB_PATH = "data/ForumDB/syn_100.db"
+# 默认用户数据库路径
+USER_DB_PATH = "data/UserDB/sys_100.db"
 
 
 def init_db_forum(db_path=FORUM_DB_PATH):
     """
     初始化论坛数据库 - 创建完整的论坛数据结构
-    
+
     该函数负责创建论坛系统所需的所有数据表和索引，支持完整的
     社交互动功能。如果数据库已存在，会先删除后重新创建。
-    
+
     数据表结构：
     1. posts表：存储帖子内容、评分、类型等核心信息
     2. reactions表：存储用户互动行为（点赞、取消点赞、转发）
     3. post_references表：存储帖子间的引用关系
-    
+
     索引优化：
     - posts表：user_id索引（提高用户帖子查询性能）
     - reactions表：post_id索引（提高帖子互动查询性能）
     - post_references表：reference_id索引（提高引用关系查询性能）
-    
+
     Args:
         db_path (str): SQLite数据库文件路径，默认使用全局FORUM_DB_PATH
-        
+
     Note:
         - 会删除现有数据库文件（如果存在）
         - 自动创建必要的目录结构
@@ -88,7 +88,8 @@ def init_db_forum(db_path=FORUM_DB_PATH):
 
     with sqlite3.connect(db_path) as conn:
         # Create posts table
-        conn.execute('''
+        conn.execute(
+            """
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -97,10 +98,12 @@ def init_db_forum(db_path=FORUM_DB_PATH):
             belief TEXT,
             type TEXT,    -- New column for post type
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )''')
+        )"""
+        )
 
         # Create reactions table
-        conn.execute('''
+        conn.execute(
+            """
         CREATE TABLE IF NOT EXISTS reactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -108,10 +111,12 @@ def init_db_forum(db_path=FORUM_DB_PATH):
             type TEXT CHECK(type IN ('repost', 'like', 'unlike')) NOT NULL,  -- New column for reaction type
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (post_id) REFERENCES posts(id)
-        )''')
+        )"""
+        )
 
         # Create post_references table
-        conn.execute('''
+        conn.execute(
+            """
         CREATE TABLE IF NOT EXISTS post_references (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             reference_id INTEGER NOT NULL,  -- ID of the referenced post
@@ -120,21 +125,23 @@ def init_db_forum(db_path=FORUM_DB_PATH):
             FOREIGN KEY (reference_id) REFERENCES posts(id),
             FOREIGN KEY (repost_id) REFERENCES posts(id),
             UNIQUE(reference_id, repost_id)  -- Ensure each reference_id and repost_id combination is unique
-        )''')
+        )"""
+        )
 
         # Create indexes
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)')
-        conn.execute('CREATE INDEX IF NOT EXISTS idx_post_references_ref_id ON post_references(reference_id)')
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_reactions_post_id ON reactions(post_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_post_references_ref_id ON post_references(reference_id)"
+        )
 
         conn.commit()
         print(f"Initialized new database file: {db_path}")
 
 
-def update_posts_score_by_date(
-    target_date: str,
-    db_path: str = FORUM_DB_PATH
-) -> bool:
+def update_posts_score_by_date(target_date: str, db_path: str = FORUM_DB_PATH) -> bool:
     """
     Update the score of posts based on reactions for a specific date.
 
@@ -154,7 +161,8 @@ def update_posts_score_by_date(
             # - 'like' = +1
             # - 'unlike' = -1
             # - 'repost' = +0 (no impact on score)
-            cursor = conn.execute('''
+            cursor = conn.execute(
+                """
                 SELECT post_id,
                        SUM(CASE WHEN type = 'like' THEN 1
                                WHEN type = 'unlike' THEN -1
@@ -162,18 +170,23 @@ def update_posts_score_by_date(
                 FROM reactions
                 WHERE DATE(created_at) = ?
                 GROUP BY post_id
-            ''', (target_date,))
+            """,
+                (target_date,),
+            )
 
             # Fetch all results
             post_scores = cursor.fetchall()
 
             # Update the posts table with the calculated scores
             for post_id, total_score in post_scores:
-                conn.execute('''
+                conn.execute(
+                    """
                     UPDATE posts
                     SET score = ?
                     WHERE id = ?
-                ''', (total_score, post_id))
+                """,
+                    (total_score, post_id),
+                )
 
             conn.commit()
             return True
@@ -185,9 +198,9 @@ def update_posts_score_by_date(
 
 
 def update_posts_score_by_date_range(
-    start_date: str = '2023-01-01',
-    end_date: str = '2023-06-16',
-    db_path: str = "FORUM_DB_PATH"
+    start_date: str = "2023-01-01",
+    end_date: str = "2023-06-16",
+    db_path: str = "FORUM_DB_PATH",
 ) -> tuple[bool, pd.DataFrame]:
     """
     Update the score of posts based on reactions for a specific date range.
@@ -207,14 +220,18 @@ def update_posts_score_by_date_range(
             conn.execute("BEGIN")
 
             # Reset scores to 0 for posts within the date range
-            conn.execute('''
+            conn.execute(
+                """
                 UPDATE posts 
                 SET score = 0 
                 WHERE DATE(created_at) BETWEEN ? AND ?
-            ''', (start_date, end_date))
+            """,
+                (start_date, end_date),
+            )
 
             # Calculate the total score for each post based on reactions within the date range
-            cursor = conn.execute('''
+            cursor = conn.execute(
+                """
                 SELECT post_id,
                        SUM(CASE WHEN type = 'like' THEN 1
                                WHEN type = 'unlike' THEN -1
@@ -222,41 +239,55 @@ def update_posts_score_by_date_range(
                 FROM reactions
                 WHERE DATE(created_at) BETWEEN ? AND ?
                 GROUP BY post_id
-            ''', (start_date, end_date))
+            """,
+                (start_date, end_date),
+            )
 
             # Fetch all results
             post_scores = cursor.fetchall()
 
             # Update the posts table with the calculated scores
             for post_id, total_score in post_scores:
-                cursor.execute('''
+                cursor.execute(
+                    """
                     SELECT type FROM posts WHERE id = ?
-                ''', (post_id,))
+                """,
+                    (post_id,),
+                )
                 post_type_row = cursor.fetchone()
 
-                if post_type_row and post_type_row[0] == 'repost':
+                if post_type_row and post_type_row[0] == "repost":
                     root_post_id = find_root_post(post_id, db_path)
                     if root_post_id:
-                        path = root_post_id['path']
-                        path.append(root_post_id['post_id'])
-                        for id in root_post_id['path']:
-                            conn.execute('''
+                        path = root_post_id["path"]
+                        path.append(root_post_id["post_id"])
+                        for id in root_post_id["path"]:
+                            conn.execute(
+                                """
                                 UPDATE posts
                                 SET score = score + ?
                                 WHERE id = ?
-                            ''', (total_score, id))
+                            """,
+                                (total_score, id),
+                            )
                 else:
-                    conn.execute('''
+                    conn.execute(
+                        """
                         UPDATE posts
                         SET score = ?
                         WHERE id = ?
-                    ''', (total_score, post_id))
+                    """,
+                        (total_score, post_id),
+                    )
 
             # Get final scores for all posts in date range
-            scores_df = pd.read_sql_query('''
+            scores_df = pd.read_sql_query(
+                """
                 SELECT id as post_id, score
                 FROM posts 
-            ''', conn)
+            """,
+                conn,
+            )
 
             conn.commit()
             return True, scores_df
@@ -265,12 +296,12 @@ def update_posts_score_by_date_range(
         print(f"Error updating posts score: {e}")
         conn.rollback()
         return False, pd.DataFrame()
-    
+
 
 def fetch_posts_score_by_date_range(
-    start_date: str = '2023-01-01',
-    end_date: str = '2023-06-16',
-    db_path: str = "FORUM_DB_PATH"
+    start_date: str = "2023-01-01",
+    end_date: str = "2023-06-16",
+    db_path: str = "FORUM_DB_PATH",
 ) -> pd.DataFrame:
     """
     Fetch cumulative post scores based on reactions for a specific date range.
@@ -286,14 +317,19 @@ def fetch_posts_score_by_date_range(
     try:
         with sqlite3.connect(db_path) as conn:
             # 获取所有帖子
-            posts_df = pd.read_sql_query('''
+            posts_df = pd.read_sql_query(
+                """
                 SELECT id AS post_id, type
                 FROM posts
                 WHERE DATE(created_at) BETWEEN ? AND ?
-            ''', conn, params=(start_date, end_date))
+            """,
+                conn,
+                params=(start_date, end_date),
+            )
 
             # 获取点赞和取消点赞数据
-            reactions_df = pd.read_sql_query('''
+            reactions_df = pd.read_sql_query(
+                """
                 SELECT post_id,
                        SUM(CASE WHEN type = 'like' THEN 1
                                WHEN type = 'unlike' THEN -1
@@ -301,23 +337,28 @@ def fetch_posts_score_by_date_range(
                 FROM reactions
                 WHERE DATE(created_at) BETWEEN ? AND ?
                 GROUP BY post_id
-            ''', conn, params=(start_date, end_date))
+            """,
+                conn,
+                params=(start_date, end_date),
+            )
 
         # 合并帖子信息和 reactions 统计数据
         scores_df = posts_df.merge(reactions_df, on="post_id", how="left").fillna(0)
 
         # 处理 repost 级联加分
         for index, row in scores_df.iterrows():
-            if row['type'] == 'repost':
-                root_post_id = find_root_post(row['post_id'], db_path)
+            if row["type"] == "repost":
+                root_post_id = find_root_post(row["post_id"], db_path)
                 if root_post_id:
-                    path = root_post_id['path']
-                    path.append(root_post_id['post_id'])
+                    path = root_post_id["path"]
+                    path.append(root_post_id["post_id"])
                     for post_id in path:
-                        scores_df.loc[scores_df['post_id'] == post_id, 'total_score'] += row['total_score']
+                        scores_df.loc[
+                            scores_df["post_id"] == post_id, "total_score"
+                        ] += row["total_score"]
 
         # 仅保留最终需要的列
-        scores_df = scores_df[['post_id', 'total_score']]
+        scores_df = scores_df[["post_id", "total_score"]]
 
         return scores_df
 
@@ -326,13 +367,11 @@ def fetch_posts_score_by_date_range(
         return pd.DataFrame()
 
 
-
-
 def get_user_net_likes_and_post_interactions(
     user_id: str,
     start_date: pd.Timestamp,
     end_date: pd.Timestamp,
-    db_path: str = FORUM_DB_PATH
+    db_path: str = FORUM_DB_PATH,
 ) -> Tuple[int, pd.DataFrame]:
     """
     获取用户在指定时间范围内的净点赞数量及其发布的帖子的互动详情。
@@ -367,7 +406,14 @@ def get_user_net_likes_and_post_interactions(
                 WHERE p.user_id = ?
                 AND r.created_at >= ? AND r.created_at <= ?
             """
-            cursor = conn.execute(query_net_likes, (user_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+            cursor = conn.execute(
+                query_net_likes,
+                (
+                    user_id,
+                    start_date.strftime("%Y-%m-%d"),
+                    end_date.strftime("%Y-%m-%d"),
+                ),
+            )
             result = cursor.fetchone()
             total_likes = result["total_likes"] if result["total_likes"] else 0
             total_unlikes = result["total_unlikes"] if result["total_unlikes"] else 0
@@ -387,19 +433,38 @@ def get_user_net_likes_and_post_interactions(
                 AND p.created_at >= ? AND p.created_at <= ?
                 GROUP BY p.id
             """
-            cursor = conn.execute(query_post_interactions, (user_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')))
+            cursor = conn.execute(
+                query_post_interactions,
+                (
+                    user_id,
+                    start_date.strftime("%Y-%m-%d"),
+                    end_date.strftime("%Y-%m-%d"),
+                ),
+            )
             rows = cursor.fetchall()
 
             # 将结果转换为 DataFrame
             data = []
             for row in rows:
-                data.append({
-                    "post_id": row["post_id"],
-                    "created_at": row["created_at"],
-                    "like_users": row["like_users"].split(",") if row["like_users"] else [],
-                    "unlike_users": row["unlike_users"].split(",") if row["unlike_users"] else [],
-                    "repost_users": row["repost_users"].split(",") if row["repost_users"] else []
-                })
+                data.append(
+                    {
+                        "post_id": row["post_id"],
+                        "created_at": row["created_at"],
+                        "like_users": (
+                            row["like_users"].split(",") if row["like_users"] else []
+                        ),
+                        "unlike_users": (
+                            row["unlike_users"].split(",")
+                            if row["unlike_users"]
+                            else []
+                        ),
+                        "repost_users": (
+                            row["repost_users"].split(",")
+                            if row["repost_users"]
+                            else []
+                        ),
+                    }
+                )
             df = pd.DataFrame(data)
 
             return net_likes, df
@@ -415,19 +480,19 @@ def create_post_db(
     belief: Optional[str] = None,
     type: Optional[str] = None,
     created_at: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    db_path: str = FORUM_DB_PATH,
 ) -> Optional[int]:
     """
     在论坛数据库中创建新帖子
-    
+
     该函数负责在论坛系统中创建新的帖子记录，支持多种帖子类型
     和用户信念值的记录，是用户发布内容的核心接口。
-    
+
     帖子信息包含：
     - 基础信息：用户ID、内容、创建时间
     - 扩展信息：用户信念值、帖子类型
     - 系统信息：自动生成的帖子ID、初始评分
-    
+
     Args:
         user_id (str): 发帖用户的ID
         content (str): 帖子的文本内容
@@ -435,10 +500,10 @@ def create_post_db(
         type (Optional[str]): 帖子类型，可选
         created_at (Optional[pd.Timestamp]): 帖子创建时间，默认当前时间
         db_path (str): 数据库文件路径，默认使用全局FORUM_DB_PATH
-        
+
     Returns:
         Optional[int]: 创建成功返回帖子ID，失败返回None
-        
+
     Note:
         - 帖子ID由数据库自动生成
         - 初始评分为0，后续通过互动更新
@@ -450,10 +515,19 @@ def create_post_db(
             if created_at is None:
                 created_at = pd.Timestamp.now()
 
-            cursor = conn.execute('''
+            cursor = conn.execute(
+                """
                 INSERT INTO posts (user_id, content, belief, type, created_at)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, content, belief, type, created_at.strftime('%Y-%m-%d %H:%M:%S')))
+            """,
+                (
+                    user_id,
+                    content,
+                    belief,
+                    type,
+                    created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                ),
+            )
 
             post_id = cursor.lastrowid
             conn.commit()
@@ -470,7 +544,7 @@ def repost_db(
     content: str,
     belief: Optional[str] = None,
     created_at: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    db_path: str = FORUM_DB_PATH,
 ) -> Optional[int]:
     """
     Create a repost referencing another post and record a reaction of type 'repost'.
@@ -492,7 +566,7 @@ def repost_db(
             conn.execute("BEGIN")
 
             # Verify reference exists
-            cursor = conn.execute('SELECT 1 FROM posts WHERE id = ?', (reference_id,))
+            cursor = conn.execute("SELECT 1 FROM posts WHERE id = ?", (reference_id,))
             if not cursor.fetchone():
                 print(f"Reference post {reference_id} not found")
                 return None
@@ -501,24 +575,44 @@ def repost_db(
                 created_at = pd.Timestamp.now()
 
             # Create the repost with type set to 'repost'
-            cursor = conn.execute('''
+            cursor = conn.execute(
+                """
                 INSERT INTO posts (user_id, content, belief, type, created_at)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, content, belief, 'repost', created_at.strftime('%Y-%m-%d %H:%M:%S')))
+            """,
+                (
+                    user_id,
+                    content,
+                    belief,
+                    "repost",
+                    created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                ),
+            )
 
             new_post_id = cursor.lastrowid
 
             # Create reference linking the original post and the new repost
-            conn.execute('''
+            conn.execute(
+                """
                 INSERT INTO post_references (reference_id, repost_id, created_at)
                 VALUES (?, ?, ?)
-            ''', (reference_id, new_post_id, created_at.strftime('%Y-%m-%d %H:%M:%S')))
+            """,
+                (reference_id, new_post_id, created_at.strftime("%Y-%m-%d %H:%M:%S")),
+            )
 
             # Record a reaction of type 'repost'
-            conn.execute('''
+            conn.execute(
+                """
                 INSERT INTO reactions (user_id, post_id, type, created_at)
                 VALUES (?, ?, ?, ?)
-            ''', (user_id, reference_id, 'repost', created_at.strftime('%Y-%m-%d %H:%M:%S')))
+            """,
+                (
+                    user_id,
+                    reference_id,
+                    "repost",
+                    created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                ),
+            )
 
             conn.commit()
             return new_post_id
@@ -533,7 +627,7 @@ async def like_post_db(
     user_id: str,
     post_id: int,
     created_at: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    db_path: str = FORUM_DB_PATH,
 ) -> bool:
     """Like a post (type 'like') - Only updates reactions table."""
     try:
@@ -541,7 +635,7 @@ async def like_post_db(
             await conn.execute("BEGIN")
 
             # Check if post exists
-            cursor = await conn.execute('SELECT id FROM posts WHERE id = ?', (post_id,))
+            cursor = await conn.execute("SELECT id FROM posts WHERE id = ?", (post_id,))
             post = await cursor.fetchone()
             if not post:
                 print(f"Post {post_id} not found")
@@ -549,8 +643,8 @@ async def like_post_db(
 
             # Get current reaction if exists
             cursor = await conn.execute(
-                'SELECT type FROM reactions WHERE user_id = ? AND post_id = ?',
-                (user_id, post_id)
+                "SELECT type FROM reactions WHERE user_id = ? AND post_id = ?",
+                (user_id, post_id),
             )
             reaction = await cursor.fetchone()
 
@@ -559,19 +653,35 @@ async def like_post_db(
 
             if reaction is None:
                 # New reaction
-                await conn.execute('''
+                await conn.execute(
+                    """
                     INSERT INTO reactions (user_id, post_id, type, created_at)
                     VALUES (?, ?, ?, ?)
-                ''', (user_id, post_id, 'like', created_at.strftime('%Y-%m-%d %H:%M:%S')))
+                """,
+                    (
+                        user_id,
+                        post_id,
+                        "like",
+                        created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    ),
+                )
             else:
                 # Update existing reaction
                 old_type = reaction[0]
-                if old_type != 'like':  # Only update if not already liked
-                    await conn.execute('''
+                if old_type != "like":  # Only update if not already liked
+                    await conn.execute(
+                        """
                         UPDATE reactions 
                         SET type = ?, created_at = ?
                         WHERE user_id = ? AND post_id = ?
-                    ''', ('like', created_at.strftime('%Y-%m-%d %H:%M:%S'), user_id, post_id))
+                    """,
+                        (
+                            "like",
+                            created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                            user_id,
+                            post_id,
+                        ),
+                    )
 
             await conn.commit()
             return True
@@ -585,7 +695,7 @@ async def unlike_post_db(
     user_id: str,
     post_id: int,
     created_at: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    db_path: str = FORUM_DB_PATH,
 ) -> bool:
     """Unlike a post (type 'unlike') - Only updates reactions table."""
     try:
@@ -593,7 +703,7 @@ async def unlike_post_db(
             await conn.execute("BEGIN")
 
             # Check if post exists
-            cursor = await conn.execute('SELECT id FROM posts WHERE id = ?', (post_id,))
+            cursor = await conn.execute("SELECT id FROM posts WHERE id = ?", (post_id,))
             post = await cursor.fetchone()
             if not post:
                 print(f"Post {post_id} not found")
@@ -601,8 +711,8 @@ async def unlike_post_db(
 
             # Get current reaction if exists
             cursor = await conn.execute(
-                'SELECT type FROM reactions WHERE user_id = ? AND post_id = ?',
-                (user_id, post_id)
+                "SELECT type FROM reactions WHERE user_id = ? AND post_id = ?",
+                (user_id, post_id),
             )
             reaction = await cursor.fetchone()
 
@@ -611,19 +721,35 @@ async def unlike_post_db(
 
             if reaction is None:
                 # New reaction
-                await conn.execute('''
+                await conn.execute(
+                    """
                     INSERT INTO reactions (user_id, post_id, type, created_at)
                     VALUES (?, ?, ?, ?)
-                ''', (user_id, post_id, 'unlike', created_at.strftime('%Y-%m-%d %H:%M:%S')))
+                """,
+                    (
+                        user_id,
+                        post_id,
+                        "unlike",
+                        created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    ),
+                )
             else:
                 # Update existing reaction
                 old_type = reaction[0]
-                if old_type != 'unlike':  # Only update if not already unliked
-                    await conn.execute('''
+                if old_type != "unlike":  # Only update if not already unliked
+                    await conn.execute(
+                        """
                         UPDATE reactions 
                         SET type = ?, created_at = ?
                         WHERE user_id = ? AND post_id = ?
-                    ''', ('unlike', created_at.strftime('%Y-%m-%d %H:%M:%S'), user_id, post_id))
+                    """,
+                        (
+                            "unlike",
+                            created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                            user_id,
+                            post_id,
+                        ),
+                    )
 
             await conn.commit()
             return True
@@ -662,31 +788,24 @@ async def execute_forum_actions(
                 content=content,
                 belief=belief,
                 created_at=created_at,
-                db_path=db_path
+                db_path=db_path,
             )
 
         elif action_type == "like":
             # Like action
             await like_post_db(
-                user_id=user_id,
-                post_id=post_id,
-                created_at=created_at,
-                db_path=db_path
+                user_id=user_id, post_id=post_id, created_at=created_at, db_path=db_path
             )
 
         elif action_type == "unlike":
             # Unlike action
             await unlike_post_db(
-                user_id=user_id,
-                post_id=post_id,
-                created_at=created_at,
-                db_path=db_path
+                user_id=user_id, post_id=post_id, created_at=created_at, db_path=db_path
             )
 
 
 def get_all_users_posts_db(
-    end_date: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    end_date: Optional[pd.Timestamp] = None, db_path: str = FORUM_DB_PATH
 ) -> Dict[str, List[Dict]]:
     """
     Get all posts by all users within a date range, including all post-related attributes.
@@ -729,10 +848,10 @@ def get_all_users_posts_db(
             # Add date range filter if end_date is provided
             if end_date:
                 query += " AND created_at <= ? ORDER BY created_at DESC"
-                params.append(end_date.strftime('%Y-%m-%d %H:%M:%S'))
+                params.append(end_date.strftime("%Y-%m-%d %H:%M:%S"))
             else:
                 query += " ORDER BY created_at DESC"
-                
+
             # Execute the query
             cursor.execute(query, params)
             rows = cursor.fetchall()
@@ -753,10 +872,9 @@ def get_all_users_posts_db(
         print(f"Error getting all users' posts: {e}")
         return {}
 
+
 def get_user_posts_db(
-    user_id: str,
-    end_date: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    user_id: str, end_date: Optional[pd.Timestamp] = None, db_path: str = FORUM_DB_PATH
 ) -> List[Dict]:
     """
     Get all posts by a specific user within a date range, including all post-related attributes.
@@ -799,7 +917,7 @@ def get_user_posts_db(
             # Add date range filter if end_date is provided
             if end_date:
                 query += " AND created_at <= ?"
-                params.append(end_date.strftime('%Y-%m-%d %H:%M:%S'))
+                params.append(end_date.strftime("%Y-%m-%d %H:%M:%S"))
 
             # Execute the query
             cursor.execute(query, params)
@@ -822,17 +940,11 @@ def compute_pagerank(graph: nx.Graph) -> Dict:
 
 
 def get_cached_user_posts(
-    user_id: str,
-    db_path: str,
-    start_date: pd.Timestamp,
-    end_date: pd.Timestamp
+    user_id: str, db_path: str, start_date: pd.Timestamp, end_date: pd.Timestamp
 ) -> List[Dict]:
     """Cache user posts with TTL."""
     return get_user_posts_db(
-        user_id=user_id,
-        db_path=db_path,
-        start_date=start_date,
-        end_date=end_date
+        user_id=user_id, db_path=db_path, start_date=start_date, end_date=end_date
     )
 
 
@@ -886,7 +998,7 @@ def recommend_posts(
     db_path: str,
     start_date: pd.Timestamp,
     end_date: pd.Timestamp,
-    max_return: int = 3
+    max_return: int = 3,
 ) -> List[Dict]:
     """
     Recommend posts for a target user using the provided hot score formula.
@@ -896,12 +1008,16 @@ def recommend_posts(
             conn.row_factory = sqlite3.Row  # Return results as dictionaries
 
             # Step 1: Retrieve posts from all users except target user
-            query = '''
+            query = """
                 SELECT p.id, p.user_id, p.content, p.score, p.belief, p.type, p.created_at
                 FROM posts p
                 WHERE p.user_id != ? AND p.created_at BETWEEN ? AND ?
-            '''
-            params = (target_user_id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
+            """
+            params = (
+                target_user_id,
+                start_date.strftime("%Y-%m-%d"),
+                end_date.strftime("%Y-%m-%d"),
+            )
             cursor = conn.execute(query, params)
             all_posts = cursor.fetchall()
 
@@ -912,12 +1028,12 @@ def recommend_posts(
             for post in all_posts:
                 # Step 2.1: Count upvotes and downvotes for this post
                 post_id = post["id"]
-                reactions_query = '''
+                reactions_query = """
                     SELECT score, COUNT(*) AS count
                     FROM reactions
                     WHERE post_id = ?
                     GROUP BY score
-                '''
+                """
                 reactions_cursor = conn.execute(reactions_query, (post_id,))
                 reactions = reactions_cursor.fetchall()
 
@@ -935,10 +1051,15 @@ def recommend_posts(
                 # Step 2.2: Calculate the hot score
                 u = upvotes  # Number of upvotes
                 d = downvotes  # Number of downvotes
-                t = pd.to_datetime(post["created_at"]).timestamp()  # Submission time in seconds
+                t = pd.to_datetime(
+                    post["created_at"]
+                ).timestamp()  # Submission time in seconds
 
                 # Calculate the hot score
-                h = math.log10(max(abs(u - d), 1)) + math.copysign(1, u - d) * (t - t0) / 45000
+                h = (
+                    math.log10(max(abs(u - d), 1))
+                    + math.copysign(1, u - d) * (t - t0) / 45000
+                )
                 ranked_posts.append((h, dict(post)))  # Convert sqlite3.Row to dict
 
             # Step 3: Sort posts by hot score in descending order
@@ -958,25 +1079,25 @@ def recommend_post_graph(
     db_path: str,
     start_date: pd.Timestamp,
     end_date: pd.Timestamp,
-    max_return: int = 3
+    max_return: int = 3,
 ) -> List[Dict]:
     """
     基于社交网络图的帖子推荐算法
-    
+
     该函数实现了一个基于用户社交关系的智能帖子推荐系统。
     只推荐来自用户直接社交连接的帖子，并使用改进的热度算法进行排序。
-    
+
     推荐算法特性：
     1. 社交过滤：只推荐来自图中直接邻居用户的帖子
     2. 时间衰减：考虑帖子发布时间对热度的影响
     3. 对数缩放：使用对数函数处理互动数量，避免极值影响
     4. 热度排序：基于改进的热度公式进行帖子排序
     5. 质量筛选：自动过滤低质量和过时内容
-    
+
     热度计算公式：
     - 正向内容：log10(净点赞数 + 1) / (时间衰减因子 ^ 1.8)
     - 负向内容：-时间衰减值（快速下沉）
-    
+
     Args:
         graph (nx.Graph): 用户社交关系网络图
         target_user_id (str): 目标用户ID（推荐对象）
@@ -984,7 +1105,7 @@ def recommend_post_graph(
         start_date (pd.Timestamp): 推荐内容的开始时间
         end_date (pd.Timestamp): 推荐内容的结束时间
         max_return (int): 最大返回帖子数量，默认3个
-        
+
     Returns:
         List[Dict]: 推荐的帖子列表，按热度降序排列，每个帖子包含：
             - id: 帖子ID
@@ -994,7 +1115,7 @@ def recommend_post_graph(
             - belief: 用户信念值
             - type: 帖子类型
             - created_at: 创建时间
-            
+
     Note:
         - 只推荐来自社交网络邻居的帖子
         - 使用改进的热度算法确保内容质量
@@ -1012,12 +1133,17 @@ def recommend_post_graph(
                 return []
 
             # Step 2: Retrieve posts from these neighboring users
-            query = '''
+            query = """
                 SELECT p.id, p.user_id, p.content, p.score, p.belief, p.type, p.created_at
                 FROM posts p
                 WHERE p.user_id IN ({}) AND p.created_at BETWEEN ? AND ?
-            '''.format(','.join(['?'] * len(neighbors)))  # Create a parameterized IN clause
-            params = neighbors + [start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')]
+            """.format(
+                ",".join(["?"] * len(neighbors))
+            )  # Create a parameterized IN clause
+            params = neighbors + [
+                start_date.strftime("%Y-%m-%d"),
+                end_date.strftime("%Y-%m-%d"),
+            ]
             cursor = conn.execute(query, params)
             all_posts = cursor.fetchall()
 
@@ -1028,12 +1154,12 @@ def recommend_post_graph(
             for post in all_posts:
                 # Step 3.1: Count upvotes and downvotes for this post
                 post_id = post["id"]
-                reactions_query = '''
+                reactions_query = """
                     SELECT type, COUNT(*) AS count
                     FROM reactions
                     WHERE post_id = ?
                     GROUP BY type
-                '''
+                """
                 reactions_cursor = conn.execute(reactions_query, (post_id,))
                 reactions = reactions_cursor.fetchall()
 
@@ -1043,24 +1169,30 @@ def recommend_post_graph(
 
                 # Fill upvote and downvote counts based on the reactions
                 for reaction in reactions:
-                    if reaction["type"] == 'like':
+                    if reaction["type"] == "like":
                         upvotes = reaction["count"]
-                    elif reaction["type"] == 'unlike':
+                    elif reaction["type"] == "unlike":
                         downvotes = reaction["count"]
 
                 # Step 3.2: Calculate the hot score
                 net_votes = upvotes - downvotes
                 post_time = pd.to_datetime(post["created_at"]).timestamp()
-                days_elapsed = max((current_time - post_time) / 86400, 0.1)  # Prevent division by zero
+                days_elapsed = max(
+                    (current_time - post_time) / 86400, 0.1
+                )  # Prevent division by zero
 
                 if net_votes > 0:
-                    score = math.log10(net_votes + 1)  # Logarithmic scaling of net votes
+                    score = math.log10(
+                        net_votes + 1
+                    )  # Logarithmic scaling of net votes
                     time_decay = (days_elapsed + 1) ** 1.8  # Time decay factor
                     hot_score = score / time_decay  # Final hot score
                 else:
                     hot_score = -days_elapsed  # Negative content sinks quickly
 
-                ranked_posts.append((hot_score, dict(post)))  # Convert sqlite3.Row to dict
+                ranked_posts.append(
+                    (hot_score, dict(post))
+                )  # Convert sqlite3.Row to dict
 
             # Step 4: Sort posts by hot score in descending order
             ranked_posts.sort(key=lambda x: x[0], reverse=True)
@@ -1124,7 +1256,7 @@ def get_user_reactions_db(
     reaction_type: Optional[str] = None,
     start_date: Optional[pd.Timestamp] = None,
     end_date: Optional[pd.Timestamp] = None,
-    db_path: str = FORUM_DB_PATH
+    db_path: str = FORUM_DB_PATH,
 ) -> List[Dict]:
     """
     Get all reactions by a user within date range
@@ -1160,10 +1292,10 @@ def get_user_reactions_db(
                 params.append(1 if reaction_type == "like" else -1)
             if start_date:
                 query += " AND r.created_at >= ?"
-                params.append(start_date.strftime('%Y-%m-%d'))
+                params.append(start_date.strftime("%Y-%m-%d"))
             if end_date:
                 query += " AND r.created_at <= ?"
-                params.append(end_date.strftime('%Y-%m-%d'))
+                params.append(end_date.strftime("%Y-%m-%d"))
 
             query += " ORDER BY r.created_at DESC"
 
@@ -1177,10 +1309,7 @@ def get_user_reactions_db(
         return []
 
 
-def get_post_by_id_db(
-    post_id: int,
-    db_path: str = FORUM_DB_PATH
-) -> Optional[Dict]:
+def get_post_by_id_db(post_id: int, db_path: str = FORUM_DB_PATH) -> Optional[Dict]:
     """
     Get detailed information about a specific post
 
@@ -1231,9 +1360,7 @@ def get_post_by_id_db(
 
 
 def get_post_count_by_date_range_db(
-    start_date: str,
-    end_date: str,
-    db_path: str = FORUM_DB_PATH
+    start_date: str, end_date: str, db_path: str = FORUM_DB_PATH
 ) -> Tuple[int, int]:
     """
     Get total post count and unique user count within a date range.
@@ -1244,7 +1371,7 @@ def get_post_count_by_date_range_db(
         db_path (str): Path to the database. Defaults to FORUM_DB_PATH.
 
     Returns:
-        Tuple[int, int]: 
+        Tuple[int, int]:
             First int: Total post count in date range
             Second int: Total unique user count in date range
     """
@@ -1269,7 +1396,7 @@ def get_post_count_by_date_range_db(
     except sqlite3.Error as e:
         print(f"Error getting stats: {e}")
         return 0, 0
-    
+
 
 def find_root_post(post_id, db_path):
     """
@@ -1293,11 +1420,14 @@ def find_root_post(post_id, db_path):
 
         while True:
             # 查找当前帖子的父帖子 ID
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT reference_id
                 FROM post_references
                 WHERE repost_id = ?
-            ''', (current_post_id,))
+            """,
+                (current_post_id,),
+            )
             row = cursor.fetchone()
 
             if not row:
@@ -1310,7 +1440,8 @@ def find_root_post(post_id, db_path):
         root_candidate_id = current_post_id
 
         # 在 posts 表中查询根帖子的详细信息
-        cursor.execute('''
+        cursor.execute(
+            """
             SELECT
                 p.id,
                 p.user_id,
@@ -1320,10 +1451,12 @@ def find_root_post(post_id, db_path):
                 p.content
             FROM posts p
             WHERE p.id = ?
-        ''', (root_candidate_id,))
+        """,
+            (root_candidate_id,),
+        )
         root_row = cursor.fetchone()
 
-        if not root_row or root_row[3] == 'repost':
+        if not root_row or root_row[3] == "repost":
             return None  # 如果根帖子不存在或类型为 repost，则返回 None
 
         return {
@@ -1332,7 +1465,8 @@ def find_root_post(post_id, db_path):
             "created_at": root_row[2],
             "score": root_row[4],
             "content": root_row[5],
-            "path": path  # 返回完整路径
+            "path": path,  # 返回完整路径
         }
+
 
 # init_db_forum('/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/TwinMarket/data/ForumDB/sys_1000.db')
