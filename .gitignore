@@ -59,4 +59,4 @@ config/embedding.yaml
 # *.yaml
 # *.yml
 
-logs*/
+logs*/data/guba_data.csv
