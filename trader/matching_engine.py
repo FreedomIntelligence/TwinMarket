@@ -1002,7 +1002,7 @@ def process_trading_day(
     last_prices: dict,
     current_date: str,
     output_dir: str = "simulation_results",
-    db_path: str = "data/UserDB/sys_100.db",
+    db_path: str = "data/sys_100.db",
     df_stock: pd.DataFrame = None,
     df_stock_profile_real: pd.DataFrame = None,
     json_file_path: str = None,
@@ -1077,8 +1077,8 @@ def process_trading_day(
 def update_stock_data_table(
     results: dict,
     current_date: str,
-    db_path: str = "data/UserDB/sys_100.db",
-    real_data_path: str = "data/UserDB/stock_data.csv",
+    db_path: str = "data/sys_100.db",
+    real_data_path: str = "data/stock_data.csv",
     output_dir: str = "simulation_results",
     df_stock: pd.DataFrame = None,
 ):
@@ -1344,7 +1344,7 @@ def update_stock_data_table(
 
 def update_trading_details_table(
     current_date: str,
-    db_path: str = "data/UserDB/sys_100.db",
+    db_path: str = "data/sys_100.db",
     output_dir: str = "simulation_results",
     df_stock_profile_real: pd.DataFrame = None,
 ):
@@ -1863,7 +1863,7 @@ def test_matching_system(
     if json_file_path is None:
         json_file_path = f"logs/2023-06-15.json"
     if db_path is None:
-        db_path = f"{base_path}/data/UserDB/sys_100.db"
+        db_path = f"{base_path}/data/sys_100.db"
 
     # 创建simulation_results目录
     output_dir = f"{base_path}/simulation_results/{current_date}"
@@ -1915,8 +1915,8 @@ def test_matching_system(
 
 def update_stock_data_table_holiday(
     current_date: str,
-    db_path: str = "data/UserDB/sys_100.db",
-    real_data_path: str = "data/UserDB/stock_data.csv",
+    db_path: str = "data/sys_100.db",
+    real_data_path: str = "data/stock_data.csv",
     df_stock: pd.DataFrame = None,
 ):
     """

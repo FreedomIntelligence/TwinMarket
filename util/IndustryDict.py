@@ -124,7 +124,7 @@ def get_stocks_by_industry(industry: str) -> list:
     """
     try:
         # 读取股票资料CSV文件
-        df = pd.read_csv("data/xueqiu_data/stock_profile.csv")
+        df = pd.read_csv("data/stock_profile.csv")
 
         # 按行业筛选并获取股票代码和名称列
         filtered_df = df[df["industry"] == industry][["stock_id", "name"]]
@@ -146,7 +146,7 @@ def get_stocks_by_industry(industry: str) -> list:
 
 def get_stock_industry_and_category(
     stock_code: str,
-    profile_path: str = "/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/data/xueqiu_data/stock_profile.csv",
+    profile_path: str = "../data/stock_profile.csv",
 ) -> dict:
     """
     根据股票代码获取详细的行业和类别信息

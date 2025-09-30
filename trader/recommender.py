@@ -58,9 +58,9 @@ class StockRecommender:
 
     def __init__(
         self,
-        file_path: str = "data/guba_data/guba_data.csv",
+        file_path: str = "data/guba_data.csv",
         cache_dir: str = "trader/cache",
-        stock_path: str = "data/UserDB/userdata/stock_profile.csv",
+        stock_path: str = "data/stock_profile.csv",
     ):
         """
         初始化股票推荐系统

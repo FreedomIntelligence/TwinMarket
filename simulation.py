@@ -234,8 +234,8 @@ def process_user_input(
 def init_simulation(
     start_date: pd.Timestamp = pd.Timestamp("2023-06-15"),
     end_date: pd.Timestamp = pd.Timestamp("2023-06-16"),
-    forum_db: str = "data/ForumDB/sample.db",
-    user_db: str = "data/UserDB/sys_100.db",
+    forum_db: str = "data/sample.db",
+    user_db: str = "data/sys_100.db",
     debug: bool = True,
     max_workers: int = 1,
     user_graph_save_name: str = "user_graph",
@@ -281,11 +281,11 @@ def init_simulation(
     init_system(current_date, user_db, forum_db)
 
     # 加载重要新闻数据（已按影响力排序）
-    df_news = pd.read_pickle("data/update_long_news/sorted_impact_news.pkl")
+    df_news = pd.read_pickle("data/sorted_impact_news.pkl")
     df_news["cal_date"] = pd.to_datetime(df_news["cal_date"])
 
     # 加载交易日历数据，用于判断当日是否为交易日
-    df_trading_days = pd.read_csv("data/test_agent_zyf/basic_data/trading_days.csv")
+    df_trading_days = pd.read_csv("data/trading_days.csv")
     df_trading_days["pretrade_date"] = pd.to_datetime(df_trading_days["pretrade_date"])
     trading_days = list(df_trading_days["pretrade_date"].unique())
 

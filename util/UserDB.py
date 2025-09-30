@@ -49,7 +49,7 @@ from . import IndustryDict
 # ============================ 全局配置 ============================
 
 # 默认用户数据库路径
-DB_PATH = "data/UserDB/sys_100.db"
+DB_PATH = "data/sys_100.db"
 
 
 def get_top_industry_and_category(user_id, db_path=DB_PATH):
@@ -347,7 +347,7 @@ def get_all_user_ids(
 
 
 def save_graph(
-    G: nx.Graph, filename: str, output_dir: str = "data/UserDB", format: str = "pickle"
+    G: nx.Graph, filename: str, output_dir: str = "data/", format: str = "pickle"
 ) -> bool:
     """
     保存NetworkX图到文件
@@ -363,7 +363,7 @@ def save_graph(
     Args:
         G (nx.Graph): 要保存的NetworkX图对象
         filename (str): 基础文件名（不含扩展名）
-        output_dir (str): 保存目录，默认'data/UserDB'
+        output_dir (str): 保存目录，默认'data/'
         format (str): 保存格式，'graphml'、'pickle'或'both'
 
     Returns:
@@ -396,7 +396,7 @@ def save_graph(
 
 
 def load_graph(
-    filename: str, input_dir: str = "data/UserDB", format: str = "pickle"
+    filename: str, input_dir: str = "data/", format: str = "pickle"
 ) -> Optional[nx.Graph]:
     """
     Load NetworkX graph from file
@@ -430,7 +430,7 @@ def build_graph(
     similarity_threshold: float = 0.1,  # 相似性阈值
     save: bool = True,  # 是否保存图
     save_name: str = "user_graph",  # 保存的文件名
-    output_dir: str = "data/UserDB/graph",  # 保存的目录
+    output_dir: str = "data/graph",  # 保存的目录
 ) -> nx.Graph:
     """
     基于用户交易相似性构建图，并保留节点的属性。
@@ -568,7 +568,7 @@ def build_graph_new(
     time_decay_factor: float = 0.1,  # 时间衰减因子
     save: bool = True,  # 是否保存图
     save_name: str = "user_graph",  # 保存的文件名
-    output_dir: str = "data/UserDB/graph",  # 保存的目录
+    output_dir: str = "data/graph",  # 保存的目录
 ) -> nx.Graph:
     """
     构建基于行业相似性和时间衰减的用户关系网络图

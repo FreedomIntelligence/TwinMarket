@@ -18,11 +18,11 @@ echo "=== 自动数据库设置 ==="
 # 检查用户数据库
 if [[ ! -f "$user_db_path" || $(stat -f%z "$user_db_path" 2>/dev/null || stat -c%s "$user_db_path" 2>/dev/null) -eq 0 ]]; then
     echo "用户数据库不存在或为空，从模板复制..."
-    if [[ -f "data/UserDB/sys_${length}.db" ]]; then
-        cp "data/UserDB/sys_${length}.db" "$user_db_path"
+    if [[ -f "data/sys_${length}.db" ]]; then
+        cp "data/sys_${length}.db" "$user_db_path"
         echo "✅ 复制用户数据库: sys_${length}.db → user_${length}.db"
     else
-        echo "❌ 找不到模板数据库: data/UserDB/sys_${length}.db"
+        echo "❌ 找不到模板数据库: data/sys_${length}.db"
         exit 1
     fi
 else

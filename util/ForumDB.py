@@ -47,9 +47,9 @@ import pandas as pd
 # ============================ 全局配置 ============================
 
 # 默认论坛数据库路径
-FORUM_DB_PATH = "data/ForumDB/syn_100.db"
+FORUM_DB_PATH = "data/syn_100.db"
 # 默认用户数据库路径
-USER_DB_PATH = "data/UserDB/sys_100.db"
+USER_DB_PATH = "data/sys_100.db"
 
 
 def init_db_forum(db_path=FORUM_DB_PATH):
@@ -1469,4 +1469,4 @@ def find_root_post(post_id, db_path):
         }
 
 
-# init_db_forum('/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/TwinMarket/data/ForumDB/sys_1000.db')
+# init_db_forum('../data/sys_1000.db')

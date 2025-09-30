@@ -379,7 +379,7 @@ def save_results(df, output_dir):
 
 
 def init_belief(
-    db_path="/home/export/base/ycsc_wangbenyou/yangyz/online1/toby/Graph-Agent-Network/TwinMarket/data/UserDB/sys_100_ablation_all.db",
+    db_path="data/sys_1000.db",
     table_name="Profiles",
 ):
     """
