@@ -1,0 +1,696 @@
+{
+  "date": "2023-06-15",
+  "stock_code": "EREI",
+  "closing_price": 11.9,
+  "buy_ratio": 81.58995815899581,
+  "sell_ratio": 18.410041841004183,
+  "buy_orders": [
+    {
+      "price": 12.6,
+      "quantity": 80800,
+      "count": 1
+    },
+    {
+      "price": 12.48,
+      "quantity": 45900,
+      "count": 1
+    },
+    {
+      "price": 12.38,
+      "quantity": 150600,
+      "count": 1
+    },
+    {
+      "price": 12.36,
+      "quantity": 71200,
+      "count": 2
+    },
+    {
+      "price": 12.29,
+      "quantity": 29900,
+      "count": 1
+    },
+    {
+      "price": 12.28,
+      "quantity": 445600,
+      "count": 2
+    },
+    {
+      "price": 12.27,
+      "quantity": 467800,
+      "count": 1
+    },
+    {
+      "price": 12.24,
+      "quantity": 30600,
+      "count": 1
+    },
+    {
+      "price": 12.22,
+      "quantity": 1597200,
+      "count": 1
+    },
+    {
+      "price": 12.21,
+      "quantity": 253100,
+      "count": 1
+    },
+    {
+      "price": 12.2,
+      "quantity": 147600,
+      "count": 2
+    },
+    {
+      "price": 12.17,
+      "quantity": 71800,
+      "count": 2
+    },
+    {
+      "price": 12.16,
+      "quantity": 30200,
+      "count": 1
+    },
+    {
+      "price": 12.15,
+      "quantity": 91500,
+      "count": 2
+    },
+    {
+      "price": 12.14,
+      "quantity": 123100,
+      "count": 2
+    },
+    {
+      "price": 12.11,
+      "quantity": 581500,
+      "count": 2
+    },
+    {
+      "price": 12.1,
+      "quantity": 225500,
+      "count": 3
+    },
+    {
+      "price": 12.09,
+      "quantity": 28200,
+      "count": 1
+    },
+    {
+      "price": 12.08,
+      "quantity": 840200,
+      "count": 2
+    },
+    {
+      "price": 12.05,
+      "quantity": 112400,
+      "count": 2
+    },
+    {
+      "price": 12.04,
+      "quantity": 32000,
+      "count": 1
+    },
+    {
+      "price": 12.03,
+      "quantity": 268400,
+      "count": 2
+    },
+    {
+      "price": 12.02,
+      "quantity": 58100,
+      "count": 2
+    },
+    {
+      "price": 12.01,
+      "quantity": 73500,
+      "count": 2
+    },
+    {
+      "price": 12.0,
+      "quantity": 217500,
+      "count": 2
+    },
+    {
+      "price": 11.99,
+      "quantity": 831800,
+      "count": 1
+    },
+    {
+      "price": 11.98,
+      "quantity": 117800,
+      "count": 2
+    },
+    {
+      "price": 11.97,
+      "quantity": 1065700,
+      "count": 4
+    },
+    {
+      "price": 11.96,
+      "quantity": 1778900,
+      "count": 4
+    },
+    {
+      "price": 11.95,
+      "quantity": 102600,
+      "count": 2
+    },
+    {
+      "price": 11.94,
+      "quantity": 158100,
+      "count": 2
+    },
+    {
+      "price": 11.91,
+      "quantity": 28500,
+      "count": 1
+    },
+    {
+      "price": 11.89,
+      "quantity": 695100,
+      "count": 3
+    },
+    {
+      "price": 11.88,
+      "quantity": 1534600,
+      "count": 6
+    },
+    {
+      "price": 11.87,
+      "quantity": 30200,
+      "count": 1
+    },
+    {
+      "price": 11.86,
+      "quantity": 265200,
+      "count": 2
+    },
+    {
+      "price": 11.85,
+      "quantity": 778500,
+      "count": 2
+    },
+    {
+      "price": 11.84,
+      "quantity": 47100,
+      "count": 1
+    },
+    {
+      "price": 11.82,
+      "quantity": 477400,
+      "count": 2
+    },
+    {
+      "price": 11.81,
+      "quantity": 1927100,
+      "count": 4
+    },
+    {
+      "price": 11.79,
+      "quantity": 327900,
+      "count": 3
+    },
+    {
+      "price": 11.78,
+      "quantity": 199600,
+      "count": 3
+    },
+    {
+      "price": 11.77,
+      "quantity": 891000,
+      "count": 1
+    },
+    {
+      "price": 11.75,
+      "quantity": 86700,
+      "count": 2
+    },
+    {
+      "price": 11.74,
+      "quantity": 119400,
+      "count": 2
+    },
+    {
+      "price": 11.73,
+      "quantity": 62400,
+      "count": 2
+    },
+    {
+      "price": 11.72,
+      "quantity": 45700,
+      "count": 1
+    },
+    {
+      "price": 11.71,
+      "quantity": 183000,
+      "count": 2
+    },
+    {
+      "price": 11.7,
+      "quantity": 1856500,
+      "count": 6
+    },
+    {
+      "price": 11.69,
+      "quantity": 1264100,
+      "count": 5
+    },
+    {
+      "price": 11.68,
+      "quantity": 60200,
+      "count": 2
+    },
+    {
+      "price": 11.67,
+      "quantity": 378800,
+      "count": 3
+    },
+    {
+      "price": 11.65,
+      "quantity": 30200,
+      "count": 1
+    },
+    {
+      "price": 11.64,
+      "quantity": 499500,
+      "count": 1
+    },
+    {
+      "price": 11.63,
+      "quantity": 84500,
+      "count": 2
+    },
+    {
+      "price": 11.62,
+      "quantity": 122100,
+      "count": 3
+    },
+    {
+      "price": 11.61,
+      "quantity": 1872300,
+      "count": 1
+    },
+    {
+      "price": 11.6,
+      "quantity": 75300,
+      "count": 2
+    },
+    {
+      "price": 11.59,
+      "quantity": 64300,
+      "count": 2
+    },
+    {
+      "price": 11.58,
+      "quantity": 475900,
+      "count": 4
+    },
+    {
+      "price": 11.57,
+      "quantity": 100400,
+      "count": 2
+    },
+    {
+      "price": 11.56,
+      "quantity": 27100,
+      "count": 1
+    },
+    {
+      "price": 11.55,
+      "quantity": 1173700,
+      "count": 6
+    },
+    {
+      "price": 11.54,
+      "quantity": 131600,
+      "count": 2
+    },
+    {
+      "price": 11.53,
+      "quantity": 247000,
+      "count": 2
+    },
+    {
+      "price": 11.52,
+      "quantity": 254600,
+      "count": 3
+    },
+    {
+      "price": 11.51,
+      "quantity": 1208100,
+      "count": 3
+    },
+    {
+      "price": 11.5,
+      "quantity": 90500,
+      "count": 2
+    },
+    {
+      "price": 11.49,
+      "quantity": 1746000,
+      "count": 3
+    },
+    {
+      "price": 11.48,
+      "quantity": 378900,
+      "count": 2
+    },
+    {
+      "price": 11.47,
+      "quantity": 55900,
+      "count": 1
+    },
+    {
+      "price": 11.46,
+      "quantity": 2102800,
+      "count": 3
+    },
+    {
+      "price": 11.45,
+      "quantity": 31000,
+      "count": 1
+    },
+    {
+      "price": 11.44,
+      "quantity": 81800,
+      "count": 1
+    },
+    {
+      "price": 11.43,
+      "quantity": 47800,
+      "count": 1
+    },
+    {
+      "price": 11.42,
+      "quantity": 85700,
+      "count": 1
+    },
+    {
+      "price": 11.41,
+      "quantity": 107000,
+      "count": 3
+    },
+    {
+      "price": 11.39,
+      "quantity": 1247500,
+      "count": 2
+    },
+    {
+      "price": 11.38,
+      "quantity": 433200,
+      "count": 4
+    },
+    {
+      "price": 11.37,
+      "quantity": 118200,
+      "count": 2
+    },
+    {
+      "price": 11.36,
+      "quantity": 222900,
+      "count": 2
+    },
+    {
+      "price": 11.33,
+      "quantity": 656600,
+      "count": 3
+    },
+    {
+      "price": 11.32,
+      "quantity": 795900,
+      "count": 3
+    },
+    {
+      "price": 11.31,
+      "quantity": 773300,
+      "count": 1
+    },
+    {
+      "price": 11.28,
+      "quantity": 59300,
+      "count": 2
+    },
+    {
+      "price": 11.27,
+      "quantity": 32500,
+      "count": 1
+    },
+    {
+      "price": 11.26,
+      "quantity": 1326900,
+      "count": 1
+    },
+    {
+      "price": 11.25,
+      "quantity": 33100,
+      "count": 1
+    },
+    {
+      "price": 11.21,
+      "quantity": 333400,
+      "count": 1
+    },
+    {
+      "price": 11.17,
+      "quantity": 48800,
+      "count": 1
+    },
+    {
+      "price": 11.15,
+      "quantity": 31600,
+      "count": 1
+    },
+    {
+      "price": 11.14,
+      "quantity": 33700,
+      "count": 1
+    },
+    {
+      "price": 11.1,
+      "quantity": 270500,
+      "count": 2
+    },
+    {
+      "price": 11.08,
+      "quantity": 87700,
+      "count": 2
+    },
+    {
+      "price": 10.86,
+      "quantity": 51100,
+      "count": 1
+    },
+    {
+      "price": 10.78,
+      "quantity": 1002100,
+      "count": 1
+    },
+    {
+      "price": 10.54,
+      "quantity": 1477200,
+      "count": 1
+    }
+  ],
+  "sell_orders": [
+    {
+      "price": 11.11,
+      "quantity": 148100,
+      "count": 1
+    },
+    {
+      "price": 11.17,
+      "quantity": 189200,
+      "count": 1
+    },
+    {
+      "price": 11.27,
+      "quantity": 49200,
+      "count": 1
+    },
+    {
+      "price": 11.33,
+      "quantity": 93900,
+      "count": 1
+    },
+    {
+      "price": 11.34,
+      "quantity": 904200,
+      "count": 1
+    },
+    {
+      "price": 11.44,
+      "quantity": 788100,
+      "count": 1
+    },
+    {
+      "price": 11.45,
+      "quantity": 83000,
+      "count": 1
+    },
+    {
+      "price": 11.46,
+      "quantity": 95200,
+      "count": 1
+    },
+    {
+      "price": 11.48,
+      "quantity": 93700,
+      "count": 1
+    },
+    {
+      "price": 11.49,
+      "quantity": 1376100,
+      "count": 1
+    },
+    {
+      "price": 11.5,
+      "quantity": 86300,
+      "count": 1
+    },
+    {
+      "price": 11.53,
+      "quantity": 1773600,
+      "count": 2
+    },
+    {
+      "price": 11.56,
+      "quantity": 94000,
+      "count": 1
+    },
+    {
+      "price": 11.57,
+      "quantity": 1551100,
+      "count": 1
+    },
+    {
+      "price": 11.62,
+      "quantity": 129900,
+      "count": 1
+    },
+    {
+      "price": 11.66,
+      "quantity": 415900,
+      "count": 1
+    },
+    {
+      "price": 11.77,
+      "quantity": 1193100,
+      "count": 3
+    },
+    {
+      "price": 11.78,
+      "quantity": 804100,
+      "count": 1
+    },
+    {
+      "price": 11.82,
+      "quantity": 174400,
+      "count": 1
+    },
+    {
+      "price": 11.86,
+      "quantity": 42800,
+      "count": 1
+    },
+    {
+      "price": 11.9,
+      "quantity": 85900,
+      "count": 1
+    },
+    {
+      "price": 11.91,
+      "quantity": 211300,
+      "count": 1
+    },
+    {
+      "price": 11.92,
+      "quantity": 87300,
+      "count": 1
+    },
+    {
+      "price": 11.96,
+      "quantity": 906700,
+      "count": 1
+    },
+    {
+      "price": 12.01,
+      "quantity": 879700,
+      "count": 1
+    },
+    {
+      "price": 12.02,
+      "quantity": 860200,
+      "count": 1
+    },
+    {
+      "price": 12.05,
+      "quantity": 559700,
+      "count": 1
+    },
+    {
+      "price": 12.07,
+      "quantity": 176500,
+      "count": 1
+    },
+    {
+      "price": 12.08,
+      "quantity": 271000,
+      "count": 2
+    },
+    {
+      "price": 12.1,
+      "quantity": 100,
+      "count": 1
+    },
+    {
+      "price": 12.11,
+      "quantity": 85800,
+      "count": 1
+    },
+    {
+      "price": 12.12,
+      "quantity": 162600,
+      "count": 1
+    },
+    {
+      "price": 12.15,
+      "quantity": 1121400,
+      "count": 1
+    },
+    {
+      "price": 12.33,
+      "quantity": 87600,
+      "count": 1
+    },
+    {
+      "price": 12.42,
+      "quantity": 921200,
+      "count": 1
+    },
+    {
+      "price": 12.44,
+      "quantity": 1245800,
+      "count": 1
+    },
+    {
+      "price": 12.49,
+      "quantity": 132100,
+      "count": 1
+    },
+    {
+      "price": 12.62,
+      "quantity": 87000,
+      "count": 1
+    },
+    {
+      "price": 12.69,
+      "quantity": 116600,
+      "count": 1
+    },
+    {
+      "price": 12.82,
+      "quantity": 40000,
+      "count": 1
+    }
+  ]
+}
