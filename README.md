@@ -1,6 +1,6 @@
 # TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets
 
-<p align="center">[ English | <a href="README_zh.md">中文</a> ]</p>
+<p align="center">[ <a href="README.md">English</a> | <a href="README_zh.md">中文</a> ]</p>
 
 <p align="center">
   <a href="https://arxiv.org/abs/2502.01506">
@@ -9,11 +9,12 @@
   
 </p>
 
-## 📖 Overview
 
 <div align="center">
   <img src="assets/img/TwinMarket.png" alt="TwinMarket Overview" width="100%" style="max-width: 1000px; margin: 0 auto; display: block;">
 </div>
+
+## 📖 Overview
 
 TwinMarket is an innovative stock market simulation system powered by Large Language Models (LLMs). It simulates realistic trading environments through multi-agent collaboration, covering personalized trading strategies, social network interactions, and news/information analysis for an end-to-end market simulation.
 

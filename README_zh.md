@@ -1,6 +1,10 @@
 # TwinMarket - A股市场模拟系统（1.0版本）
 
-> English version: `README.md`.
+<p align="center">[ <a href="README.md">English</a> | <a href="README_zh.md">中文</a> ]</p>
+
+<div align="center">
+  <img src="assets/img/TwinMarket.png" alt="TwinMarket Overview" width="100%" style="max-width: 1000px; margin: 0 auto; display: block;">
+</div>
 
 ## 📖 项目简介
 
@@ -48,6 +52,21 @@ def calculate_custom_metric(trades):
     """计算自定义指标"""
     # 实现指标计算
     pass
+```
+
+## 🧾 引用
+
+```bibtex
+@misc{yang2025twinmarketneurips,
+      title={TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets},
+      author={Yuzhe Yang and Yifei Zhang and Minghao Wu and Kaidi Zhang and
+              Yunmiao Zhang and Honghai Yu and Yan Hu and Benyou Wang},
+      year={2025},
+      eprint={2502.01506},
+      archivePrefix={arXiv},
+      primaryClass={cs.CE},
+      url={https://arxiv.org/abs/2502.01506},
+}
 ```
 
 
