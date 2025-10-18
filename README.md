@@ -18,7 +18,7 @@
 
 TwinMarket is an innovative stock market simulation system powered by Large Language Models (LLMs). It simulates realistic trading environments through multi-agent collaboration, covering personalized trading strategies, social network interactions, and news/information analysis for an end-to-end market simulation.
 
-### 🎯 Key Features
+## 🎯 Key Features
 
 - **🤖 Intelligent Trading Agents**: LLM-driven, personalized decision-making
 - **🌐 Social Network Simulation**: Forum-style interactions and user relationship graphs
