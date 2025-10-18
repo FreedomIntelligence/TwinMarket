@@ -3,6 +3,7 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2502.01506-b31b1b.svg)](https://arxiv.org/abs/2502.01506)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://freedomintelligence.github.io/TwinMarket/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Post-0A66C2.svg)](https://www.linkedin.com/feed/update/urn:li:activity:7325176225235173376/)
 [![README](https://img.shields.io/badge/README-English-green.svg)](README.md)
 [![README_zh](https://img.shields.io/badge/README-中文-green.svg)](README_zh.md)
 
