@@ -1,4 +1,4 @@
-# TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets
+# TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets 
 
 <p align="center">[ <a href="README.md">English</a> | <a href="README_zh.md">中文</a> ]</p>
 
