@@ -1,18 +1,33 @@
 # TwinMarket: A Scalable Behavioral and Social Simulation for Financial Markets 
 
-<p align="center">[ <a href="README.md">English</a> | <a href="README_zh.md">中文</a> ]</p>
+<p align="left">
 
-<p align="center">
   <a href="https://arxiv.org/abs/2502.01506">
-    <img src="https://img.shields.io/badge/arXiv-2502.01506-b31b1b.svg" alt="arXiv:2502.01506" />
+    <img src="https://img.shields.io/badge/Paper-arXiv-b31b1b.svg" alt="arXiv:2502.01506" />
+  </a>
+
+  <a href="https://freedomintelligence.github.io/TwinMarket/">
+    <img src="https://img.shields.io/badge/Project-Page-4caf50.svg" alt="Project Page" />
   </a>
   
+  <a href="README.md">
+    <img src="https://img.shields.io/badge/🌍-English-blue.svg" alt="English" />
+  </a>
+
+  <a href="README_zh.md">
+    <img src="https://img.shields.io/badge/🌏-中文-red.svg" alt="中文" />
+  </a>
+
 </p>
 
 
 <div align="center">
   <img src="assets/img/TwinMarket.png" alt="TwinMarket Overview" width="100%" style="max-width: 1000px; margin: 0 auto; display: block;">
 </div>
+
+ ## 💡 Update
+- **09/2025:** TwinMarket was accepted to NeurIPS 2025. See you in San Diego! 🌊
+- **04/2025:** TwinMarket won the [Best Paper Award](https://yuzheyang.com/src/img/best_paper.jpg) 🏆 at the [Advances in Financial AI Workshop @ ICLR 2025](https://sites.google.com/view/financialaiiclr25/home).
 
 ## 📖 Overview
 
