@@ -71,7 +71,7 @@ def calculate_custom_metric(trades):
   author    = {Yuzhe Yang and Yifei Zhang and Minghao Wu and Kaidi Zhang and
                Yunmiao Zhang and Honghai Yu and Yan Hu and Benyou Wang},
   booktitle = {Proceedings of the 39th Annual Conference on Neural Information Processing Systems (NeurIPS)},
-  year      = {2025}
+  year      = {2025},
   url       = {https://arxiv.org/abs/2502.01506}
 }
 ```
