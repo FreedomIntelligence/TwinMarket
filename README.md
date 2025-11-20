@@ -75,3 +75,7 @@ def calculate_custom_metric(trades):
   url       = {https://arxiv.org/abs/2502.01506}
 }
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=FreedomIntelligence/TwinMarket&type=date&legend=top-left)](https://www.star-history.com/#FreedomIntelligence/TwinMarket&type=date&legend=top-left)
