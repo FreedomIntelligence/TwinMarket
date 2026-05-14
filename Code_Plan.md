@@ -805,3 +805,17 @@ python simulation.py \
 
 ```
 ```
+
+#### ✅ 완료 노트 (2026-05-14) — Stage 1-1 ~ Stage 1-5
+- **수행한 것**:
+  - `script/kr/prepare_kr_data.py` 신규 생성: 삼성전자 OHLCV/기초지표 수집, 기술지표 계산, `data/stock_data_kr.csv` 및 `data/trading_days_kr.csv` 생성 로직 구현.
+  - `script/kr/init_kr_profiles.py` 신규 생성: `data/sys_1000.db` 복사 후 `data/sys_100_kr.db` 생성, `TradingDetails` 삭제, 사용자별 최신 `Profiles` row 기준 KR 초기화 구현.
+  - `script/kr/init_kr_beliefs.py` 신규 생성: `util/belief/belief_100.csv` 기반 `util/belief/belief_100_kr.csv` 생성 및 KR neutral belief 반영.
+  - `script/kr/build_kr_news.py` 신규 생성: 삼성 뉴스 pkl 정규화(`cal_date`,`news`), 거래일 merge 기반 뉴스 없는 날짜 `[]` 처리, `data/samsung_news.pkl` 저장 및 `data/InformationDB_samsung/` FAISS/metadata 생성.
+- **핵심 판단**:
+  - Stage 2 엔진 코드는 요청에 따라 미수정.
+  - China-market 기존 파일은 수정하지 않고 KR 전용 스크립트/출력 경로만 추가.
+- **발견한 문제**:
+  - 원격 브랜치 `kr-samsung-poc`는 기존에 없어 로컬에서 신규 생성.
+- **다음 Stage 준비**:
+  - Stage 2 진행 시 `--news_pkl`, `--information_db_dir` CLI 주입 경로를 런타임 코드에 연결 필요.
